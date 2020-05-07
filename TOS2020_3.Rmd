@@ -1,0 +1,302 @@
+---
+title: "TOS2020 chapter 3: making categories"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(magrittr)
+library(dplyr)
+library(psych)
+library(PAutilities)
+library(childsds)
+```
+
+# Load data
+```{r}
+load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/POST_CLEAN.RData")
+```
+
+# combine datasets
+```{r}
+dim(df)
+dim(gord)
+
+data<-merge(df_final, gord)
+dim(data)
+rm(df_final, gord)
+rm(list_of_files)
+```
+
+```{r}
+fcols<-c(
+"subjectkey", "gender", "demo_race_a_p___10", "demo_race_a_p___11", "demo_race_a_p___12", "demo_race_a_p___13", "demo_race_a_p___14", "demo_race_a_p___15", "demo_race_a_p___16", "demo_race_a_p___17", "demo_race_a_p___18", "demo_race_a_p___19", "demo_race_a_p___20", "demo_race_a_p___21", "demo_race_a_p___22", "demo_race_a_p___23", "demo_race_a_p___24", "demo_race_a_p___25", "demo_race_a_p___77", "demo_race_a_p___99","demo_sex_v2","demo_ethn_v2")
+data %<>%
+       mutate_each_(funs(factor(.)),fcols)
+str(data)
+fcols[2:22]
+```
+
+# Descriptives
+## Subjects 1581
+demo_sex_v2	What sex was the child assigned at birth, on the original birth certificate? 
+```{r}
+data %>% select(fcols[2:22]) %>% summary()
+data$gender<-as.character(data$gender)
+```
+# Calculating BMI
+```{r}
+anth<-c("anthroheightcalc", "anthroweightcalc", "anthro_waist_cm","interview_age")
+data %>% select(anth) %>% summary()
+
+data %<>% group_by(subjectkey) %>% 
+  mutate(age_years = interview_age/12) %>%
+  mutate(BMI = 703 * (anthroweightcalc)/(anthroheightcalc^2)) %>%
+  mutate(BMIsds= sds(BMI, age = age_years, sex = gender, male = "M", female = "F",ref = cdc.ref, item = "bmi", type = "SDS"))  
+
+data %<>% group_by(subjectkey) %>% 
+  mutate(age_years = interview_age/12) %>%
+  mutate(BMI = 703 * (anthroweightcalc)/(anthroheightcalc^2)) %>%
+  mutate(BMIper= sds(BMI, age = age_years, sex = gender, male = "M", female = "F",ref = cdc.ref, item = "bmi", type = "perc"))  
+
+summary(as.numeric(data$BMIper))
+# 703 x weight (lbs) / [height (in)]2
+```
+# check
+```{r}
+check<-c("subjectkey","gender","interview_age" ,"age_years","anthroweightcalc","anthroheightcalc","BMI","BMIsds", "BMIper", "")
+ch<-data[check]
+head(ch)
+# Looks good checked with https://www.cdc.gov/healthyweight/bmi/result.html?&method=english&gender=m&age_y=0&age_m=128&hinches=57.50&twp=65
+```
+
+# BMI categories
+```{r}
+data %<>% mutate(ovob=cut(BMIper, breaks=c(-Inf, .05, .85, .95, Inf), labels=c("low","average","overweight","obese")))
+summary(data$ovob)
+```
+# WC calculations
+```{r}
+data %<>% group_by(subjectkey) %>% 
+  mutate(WC_cm = anthro_waist_cm*2.54) %>%
+  mutate(WCsds= sds(WC_cm, age = age_years, sex = gender, male = "M", female = "F",ref = us.ref, item = "wc_sharma", type = "SDS"))  
+summary(data$WCsds)
+```
+# central obesity
+```{r}
+data %<>% mutate(central_ob = case_when(ovob == "obese" & WCsds >= 2 ~ "central obesity",
+                                        ovob == "obese" & WCsds < 2 ~ "obesity",
+                                        ovob == "overweight" & WCsds >= 2 ~ "central overweight",
+                                        ovob == "overweight" & WCsds < 2 ~ "overweight",
+                                        ovob == "average" & WCsds >= 2 ~ "central average",
+                                        ovob == "average" & WCsds < 2 ~ "average",
+                                        ovob == "low"  ~ "underweight",
+                                             TRUE ~ "NA"))
+summary(as.factor(data$central_ob))
+```
+
+# Puberty
+## General
+pds_ht2_y = Would you say that your growth in height?
+pds_skin2_y = Have you noticed any skin changes, especially pimples?
+pds_bdyhair_y = And how about the growth of your body hair? ("Body hair" means hair any place other than your head, such as under your arms) Would you say that your body hair growth:
+### Female specific
+pds_f4_2_y = Have you noticed that your breasts have begun to grow?
+pds_f5_y = Have you begun to menstruate (started to have your period)?
+### Male specific
+pds_m4_y = Have you noticed a deepening of your voice?
+pds_m5_y = Have you begun to grow hair on your face?
+Scoring Algorithms:
+For Items 1 through 4 on the girls’ version and all items on the boys’ version, response options were: not yet started (1 point); barely started (2 points); definitely started (3 points); seems complete (4 points); I don’t know (missing). Yes on the menstruation item = 4 points; no = 1 point. Point values are averaged for all items to give a Pubertal Development Scale (PDS) score.
+
+## Puberty Category Scores are computed using the criteria of Crockett (1988, unpublished) by totaling the scale values given above.
+```{r}
+data[data == 999.0] <- NA
+```
+
+```{r}
+data %>%
+  select(pds_bdyhair_y,pds_ht2_y, pds_skin2_y,pds_m5_y, pds_m4_y) %>%
+  summary()
+```
+```{r}
+load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/bak.RData")
+```
+### To compute Puberty Category Scores for boys use body hair growth, voice change, and facial hair growth as follows:
+Prepubertal = 3
+Early Pubertal = 4 or 5 (no 3-point responses)
+Midpubertal = 6, 7, or 8 (no 4-points)
+Late pubertal = 9-11
+Postpubertal = 12
+
+```{r}
+data_m<-data %>%
+  subset(gender == "M") %>%
+  mutate(PCSum= sum(pds_bdyhair_y,pds_ht2_y, pds_skin2_y,pds_m5_y, pds_m4_y))
+summary(data_m$PCSum)
+
+data_early<- data_m %>%
+  subset(PCSum == 5) %>%
+  mutate(PCScore = case_when(
+    pds_bdyhair_y < 3 & pds_ht2_y < 3 & pds_skin2_y < 3 & pds_m5_y < 3 & pds_m4_y < 3 ~ "early",
+    TRUE ~ "early_x"))
+
+data_mid<- data_m %>%
+  subset(PCSum > 5 & PCSum < 9) %>%
+  mutate(PCScore = case_when(
+    pds_bdyhair_y < 4 & pds_ht2_y < 4 & pds_skin2_y < 4 & pds_m5_y < 4 & pds_m4_y < 4 ~ "mid",
+    TRUE ~ "mid_x"))
+
+data_late<- data_m %>%
+  subset(PCSum < 11 & PCSum > 8) %>%
+  mutate(PCScore = case_when (PCSum < 11 & PCSum > 8 ~ "late"))
+
+data_post<- data_m %>%
+  subset(PCSum > 12) %>%
+  mutate(PCScore = case_when( PCSum > 11 ~ "post"))
+
+data_male<-rbind(data_early,data_mid, data_late, data_post)
+
+head(data_male)
+```
+### To compute Puberty Category Scores for girls use body hair growth, breast development, and menarche as follows:
+Prepubertal = 2 and no menarche
+Early Puberty = 3 and no menarche
+Midpubertal = > 3 and no menarche
+Late Puberty = <= 7 and menarche
+Postpubertal = 8 and menarche.
+```{r}
+data_f<-data %>%
+  subset(gender == "F") %>%
+  mutate(PCSum= sum(pds_bdyhair_y,pds_ht2_y, pds_skin2_y,pds_f4_2_y, pds_f5_y))
+summary(data_f$pds_f5_y)
+
+data_midF<- data_f %>%
+  subset(PCSum > 3) %>%
+  mutate(PCScore = case_when(
+    pds_f5_y != 4  ~ "mid",
+    TRUE ~ "mid_x"))
+
+data_lateF<- data_f %>%
+  subset(PCSum <= 7) %>%
+  mutate(PCScore = case_when(
+    pds_f5_y == 4  ~ "late",
+    TRUE ~ "late_x"))
+
+data_postF<- data_f %>%
+  subset(PCSum > 7) %>%
+  mutate(PCScore = case_when(
+    PCSum > 7  ~ "post",
+    TRUE ~ "post_x"))
+
+data_female<-rbind(data_midF, data_lateF, data_postF)
+```
+
+```{r}
+data_all<-rbind(data_female, data_male)
+```
+## Final sample size is 1118
+
+```{r}
+summary(data_all$demo_race_a_p___10)
+data_all %<>%
+  mutate(RaceEth = case_when(
+    demo_race_a_p___10 == "1" & demo_ethn_v2 == "1" ~ "white and Hispanic",
+    demo_race_a_p___11 == "1" & demo_ethn_v2 == "1" ~ "Black/African American and Hispanic",
+    demo_race_a_p___12 == "1" & demo_ethn_v2 == "1" ~ "Native American and Hispanic",
+    demo_race_a_p___13 == "1" & demo_ethn_v2 == "1" ~ "Native Alaskan and Hispanic",
+    demo_race_a_p___14 == "1" & demo_ethn_v2 == "1" ~ "Native Hawaiian and Hispanic",
+    demo_race_a_p___15 == "1" & demo_ethn_v2 == "1" ~ " Guamanian and Hispanic",
+    demo_race_a_p___16 == "1" & demo_ethn_v2 == "1" ~ "Samoan and Hispanic",
+    demo_race_a_p___17 == "1" & demo_ethn_v2 == "1" ~ "Other pacific islander and Hispanic",
+    demo_race_a_p___18 == "1" & demo_ethn_v2 == "1" ~ "Asian Indian and Hispanic",
+    demo_race_a_p___19 == "1" & demo_ethn_v2 == "1" ~ "Chinese and Hispanic",
+    demo_race_a_p___20 == "1" & demo_ethn_v2 == "1" ~ "Filipino and Hispanic",
+    demo_race_a_p___21 == "1" & demo_ethn_v2 == "1" ~ "Japanese and Hispanic",
+    demo_race_a_p___22 == "1" & demo_ethn_v2 == "1" ~ "Korean and Hispanic",
+    demo_race_a_p___23 == "1" & demo_ethn_v2 == "1" ~ "Vietnamese and Hispanic",
+    demo_race_a_p___24 == "1" & demo_ethn_v2 == "1" ~ "Other Asian and Hispanic",
+    demo_race_a_p___25 == "1" & demo_ethn_v2 == "1" ~ "Other Race and Hispanic",
+    demo_race_a_p___77 == "1" & demo_ethn_v2 == "1" ~ "Refused answer and Hispanic",
+    demo_race_a_p___99 == "1" & demo_ethn_v2 == "1" ~ "Don't know and Hispanic",
+    
+    demo_race_a_p___10 == "1" & demo_ethn_v2 != "1" ~ "white",
+    demo_race_a_p___11 == "1" & demo_ethn_v2 != "1" ~ "Black/African American",
+    demo_race_a_p___12 == "1" & demo_ethn_v2 != "1" ~ "Native American",
+    demo_race_a_p___13 == "1" & demo_ethn_v2 != "1" ~ "Native Alaskan",
+    demo_race_a_p___14 == "1" & demo_ethn_v2 != "1" ~ "Native Hawaiian",
+    demo_race_a_p___15 == "1" & demo_ethn_v2 != "1" ~ " Guamanian",
+    demo_race_a_p___16 == "1" & demo_ethn_v2 != "1" ~ "Samoan",
+    demo_race_a_p___17 == "1" & demo_ethn_v2 != "1" ~ "Other pacific islander",
+    demo_race_a_p___18 == "1" & demo_ethn_v2 != "1" ~ "Asian Indian",
+    demo_race_a_p___19 == "1" & demo_ethn_v2 != "1" ~ "Chinese",
+    demo_race_a_p___20 == "1" & demo_ethn_v2 != "1" ~ "Filipino",
+    demo_race_a_p___21 == "1" & demo_ethn_v2 != "1" ~ "Japanese",
+    demo_race_a_p___22 == "1" & demo_ethn_v2 != "1" ~ "Korean",
+    demo_race_a_p___23 == "1" & demo_ethn_v2 != "1" ~ "Vietnamese",
+    demo_race_a_p___24 == "1" & demo_ethn_v2 != "1" ~ "Other Asian",
+    demo_race_a_p___25 == "1" & demo_ethn_v2 != "1" ~ "Other Race",
+    demo_race_a_p___77 == "1" & demo_ethn_v2 != "1" ~ "Refused answer",
+    demo_race_a_p___99 == "1" & demo_ethn_v2 != "1" ~ "Don't know"
+    
+  ))
+summary(as.factor(data_all$RaceEth))
+```
+# SES
+U.S. real median household income == $63,688
+
+Persons in Household	48 Contiguous States and D.C. Poverty Guidelines (Annual)
+1 $12,760
+2 $17,240
+3 $21,720
+4 $26,200
+5 $30,680
+6 $35,160
+7 $39,640
+8 $44,120
+from https://aspe.hhs.gov/2020-poverty-guidelines
+demo_comb_income_v2
+1= Less than $5,000; 
+2=$5,000 through $11,999; 
+3=$12,000 through $15,999; 
+4=$16,000 through $24,999; 
+5=$25,000 through $34,999; 
+6=$35,000 through $49,999; 
+7=$50,000 through $74,999; 
+8= $75,000 through $99,999; 
+9=$100,000 through $199,999; 
+10=$200,000 and greater. 
+999 = Don't know; 
+777 = Refuse to answer
+demo_roster_v2
+demo_prnt_ed_v2
+```{r}
+summary(data_all$demo_comb_income_v2)
+data_all$demo_comb_income_v2<-as.factor(data_all$demo_comb_income_v2)
+data_all %<>%
+  mutate(SES = case_when(
+    demo_comb_income_v2 == 1 ~ "Below poverty line",
+    demo_comb_income_v2 == 2 & demo_roster_v2 > 1 ~ "Below poverty line",
+    demo_comb_income_v2 == 2 & demo_roster_v2 == 1 ~ "Above poverty line",
+    demo_comb_income_v2 == 3 & demo_roster_v2 > 2 ~ "Below poverty line",
+    demo_comb_income_v2 == 3 & demo_roster_v2 <= 2 ~ "Above poverty line",
+    demo_comb_income_v2 == 4 & demo_roster_v2 > 5 ~ "Below poverty line",
+    demo_comb_income_v2 == 4 & demo_roster_v2 <= 5 ~ "Above poverty line",
+    demo_comb_income_v2 == 5 & demo_roster_v2 > 6 ~ "Below poverty line",
+    demo_comb_income_v2 == 5 & demo_roster_v2 <= 6 ~ "Above poverty line",
+    demo_comb_income_v2 == 6 & demo_roster_v2 < 8 ~ "Below poverty line",
+    demo_comb_income_v2 == 6 & demo_roster_v2 <= 8 ~ "Above poverty line",
+    demo_comb_income_v2 == 7 & demo_roster_v2 <= 8 ~ "Above poverty line",
+    demo_comb_income_v2 == 7 & demo_roster_v2 > 8 ~ "Below poverty line",
+    demo_comb_income_v2 == 8 & demo_roster_v2 <= 10 ~ "Above poverty line",
+    demo_comb_income_v2 == 8 & demo_roster_v2 > 10 ~ "Below poverty line",
+    demo_comb_income_v2 == 9  ~ "Above poverty line",
+    demo_comb_income_v2 == 10  ~ "Above poverty line",
+    demo_comb_income_v2 == 999  ~ "Don't know",
+    demo_comb_income_v2 == 777  ~ "Refuse to answer"
+    ))
+```
+
+```{r}
+rm(ch, data, data_early, data_mid, data_f, data_female, data_late, data_lateF, data_m, data_male, data_midF, data_post, data_postF, data_prep, df, dfinal0)
+```
+

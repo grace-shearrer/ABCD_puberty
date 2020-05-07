@@ -1,0 +1,379 @@
+---
+title: "TOS 2020 analysis chap 1: Cleaning"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(vroom)
+library(psych)
+```
+
+# Data files
+
+ABCD MRI Behavior MID abcd_mid01
+
+MRI MID Beta Weights in Gordon Parcels Part 1 gordonp101
+MRI MID Beta Weights in Gordon Parcels Part 2 gordonp201
+MRI MID Beta Weights in Gordon Parcels Part 3 gordonp301
+MRI MID Beta Weights in Gordon Parcels Part 4 gordonp401
+
+ABCD MRI QC mriqc01
+
+ABCD Youth Pubertal Development Scale and Menstrual Cycle Survey History (PDMS)
+ABCD Parent Medical History Questionnaire (MHX) abcd_mx01
+ABCD Parent Demographics Survey pdem01
+ABCD Youth anthropometrics abcd_ant01 
+
+ABCD Parent Medical History Questionnaire (MHX) abcd_mx01
+ABCD Parent Medications Survey Inventory Modified from PhenX (PMP) medsy01
+
+ABCD Pubertal Hormone Saliva ABCD Youth Genetic Blood (RUCDR) Rutgers Biosamples sph01
+# Load data
+```{r}
+list_of_files <- list.files(path = "~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020", recursive = TRUE,
+                            pattern = "\\.txt$", 
+                            full.names = TRUE) 
+list_of_files
+
+# Read each file separately into a list of data frames
+d2 = map(list_of_files, ~vroom(.x))
+```
+
+# Cleaning part 1
+4524 start
+
+## Medical History
+subjectkey
+gender
+medhx_2f <<< cerebral palsy
+medhx_2g <<< diabetes
+medhx_2h <<< epilpsy
+medhx_2j <<< kidney disease
+medhx_2l <<< Musclular dystrophy
+medhx_2m <<< MS
+medhx_2o <<< heart
+medhx_2p <<< sickle cell
+```{r}
+# d2[4] medical history
+summary(as.factor(as.data.frame(d2[4])$medhx_2f)) # 6 have cerebral palsy
+summary(as.factor(as.data.frame(d2[4])$medhx_2g)) # 11 have diabetes
+summary(as.factor(as.data.frame(d2[4])$medhx_2j)) # 22 have kidney disease 
+summary(as.factor(as.data.frame(d2[4])$medhx_2l)) # 5 have MD
+summary(as.factor(as.data.frame(d2[4])$medhx_2m)) # 5 have MS
+summary(as.factor(as.data.frame(d2[4])$medhx_2o)) # 156 have heart condition
+summary(as.factor(as.data.frame(d2[4])$medhx_2p)) # 13 have sickle cell
+dim(d2[[4]])
+
+mx <- d2[[4]] %>%
+  filter(medhx_2f == 0 & medhx_2g == 0 & medhx_2j == 0 & medhx_2l == 0 & medhx_2m == 0 & medhx_2o == 0 & medhx_2p == 0) %>%
+  select(subjectkey, gender)
+dim(mx)
+```
+
+## Medications
+subjectkey
+brought_medications
+```{r}
+summary(as.factor(d2[[10]]$brought_medications))
+
+meds<-d2[[10]] %>%
+  filter(brought_medications == 1 | brought_medications == 3) %>%
+  select(subjectkey, gender)
+summary(as.factor(meds$gender)) #2608
+```
+
+## MRI QC
+subjectkey
+iqc_mid_1_fm_qc_score <<< pass (1)
+iqc_mid_2_fm_qc_score <<< pass (1)
+iqc_mid_3_fm_qc_score <<< pass (1)
+iqc_mid_4_fm_qc_score <<< pass (1)
+iqc_mid_5_fm_qc_score <<< pass (1)
+iqc_mid_6_fm_qc_score <<< pass (1)
+
+```{r}
+summary(as.factor(d2[[11]]$iqc_mid_6_qc_score))
+
+MIDQC<-d2[[11]] %>%
+  filter(iqc_mid_1_qc_score == 1 & iqc_mid_2_qc_score == 1 ) %>%
+  select(subjectkey, gender)
+dim(MIDQC)
+```
+
+## Hormone QC
+subjectkey
+hormon_sal_notes_y___1
+hormon_sal_notes_y___2
+hormon_sal_notes_y___3
+hormon_sal_notes_y___4
+hormon_sal_notes_y___5
+hormon_sal_notes_y___6
+```{r}
+# 0 = No; 1 = Yes
+colnames(d2[[13]])
+d2[[13]]%>%
+  select(hormon_sal_notes_y___1, hormon_sal_notes_y___2, hormon_sal_notes_y___3, hormon_sal_notes_y___4, hormon_sal_notes_y___5, hormon_sal_notes_y___6) %>%
+  summary()
+
+summary(as.factor(d2[[13]]$hormon_sal_notes_y___1))
+summary(as.factor(d2[[13]]$hormon_sal_notes_y___2))
+
+horQC<-d2[[13]] %>%
+  filter( hormon_sal_notes_y___2 == 0) %>%
+  select(subjectkey, gender, hormon_sal_notes_y___3, hormon_sal_notes_y___4, hormon_sal_notes_y___5)
+horQC<-d2[[13]] %>%
+  filter( hormon_sal_notes_y___3 == 0) %>%
+  select(subjectkey, gender, hormon_sal_notes_y___4, hormon_sal_notes_y___5)
+horQC<-d2[[13]] %>%
+  filter( hormon_sal_notes_y___4 == 0) %>%
+  select(subjectkey, gender,  hormon_sal_notes_y___5)
+horQC<-d2[[13]] %>%
+  filter( hormon_sal_notes_y___5 == 0) %>%
+  select(subjectkey, gender)
+
+dim(horQC)
+```
+
+# Total after cleaning
+```{r}
+# horQC, MIDQC, meds, mx  
+df1<-merge(horQC, MIDQC)
+dim(MIDQC)
+df2<-merge(df1,meds)
+dim(df2)
+df3<-merge(df2,mx)
+dim(df3)
+# Final after cleaning 1965
+```
+
+
+# Variables of interest
+## Demographics 
+subjectkey
+interview_age
+gender
+demo_brthdat_v2
+demo_sex_v2
+demo_race_a_p___10
+demo_race_a_p___11
+demo_race_a_p___12
+demo_race_a_p___13
+demo_race_a_p___14
+demo_race_a_p___15
+demo_race_a_p___16
+demo_race_a_p___17
+demo_race_a_p___18
+demo_race_a_p___19
+demo_race_a_p___20
+demo_race_a_p___21
+demo_race_a_p___22
+demo_race_a_p___23
+demo_race_a_p___24
+demo_race_a_p___25
+demo_race_a_p___77
+demo_race_a_p___99
+demo_comb_income_v2
+demo_roster_v2
+demo_roster_v2_refuse
+```{r}
+colnames(d2[[12]])
+demos<-d2[[12]] %>%
+  select(subjectkey, interview_age, gender, demo_brthdat_v2, demo_sex_v2, demo_race_a_p___10, demo_race_a_p___11, demo_race_a_p___12, demo_race_a_p___13, demo_race_a_p___14, demo_race_a_p___15, demo_race_a_p___16, demo_race_a_p___17, demo_race_a_p___18, demo_race_a_p___19, demo_race_a_p___20, demo_race_a_p___21, demo_race_a_p___22, demo_race_a_p___23, demo_race_a_p___24, demo_race_a_p___25, demo_race_a_p___77, demo_race_a_p___99, demo_comb_income_v2, demo_roster_v2, demo_roster_v2_refuse,demo_ethn_v2)
+dim(demos)
+```
+
+## Anthropometrics
+subjectkey
+interview_age
+gender
+anthroheightcalc
+anthroweightcalc
+anthro_waist_cm
+```{r}
+colnames(d2[[1]])
+anth<-d2[[1]] %>%
+  select(subjectkey, interview_age, gender, anthroheightcalc, anthroweightcalc, anthro_waist_cm)
+dim(anth)
+```
+
+
+## Hormones
+subjectkey
+hormone_scr_dhea_mean
+hormone_scr_hse_mean
+hormone_scr_ert_mean
+```{r}
+colnames(d2[[2]])
+horm<-d2[[2]] %>%
+  select(subjectkey, hormone_scr_dhea_mean, hormone_scr_hse_mean, hormone_scr_ert_mean)
+dim(horm)
+```
+## Puberty
+subjectkey
+interview_age
+gender
+pds_sex_y
+pds_ht2_y <<< growth
+pds_skin2_y <<< skin changes
+pds_bdyhair_y <<< body hair 
+pds_f4_2_y <<< breast dev
+pds_f5_y <<< menses
+pds_f6_y <<< how old menses
+pds_f6_y_dk <<< how old don't know
+pds_m4_y <<< deep voice
+pds_m5_y <<< facial hair
+
+menstrualcycle1_y <<< last period
+menstrualcycle2_y <<< days between period
+menstrualcycle2_y_dk <<< day btw don't know
+menstrualcycle3_y <<< regular menses 
+menstrualcycle4_y <<< birth control
+menstrualcycle5_y <<< pms 
+menstrualcycle6_y <<< pms2 
+```{r}
+colnames(d2[[5]])
+pube<-d2[[5]] %>%
+  select(subjectkey, interview_age, gender, pds_sex_y, pds_ht2_y, pds_skin2_y, pds_bdyhair_y, pds_f4_2_y, pds_f5_y, pds_f6_y, pds_f6_y_dk, pds_m4_y, pds_m5_y, menstrualcycle1_y, menstrualcycle2_y, menstrualcycle2_y_dk, menstrualcycle3_y, menstrualcycle4_y, menstrualcycle5_y, menstrualcycle6_y)
+dim(pube)
+head(pube)
+```
+
+## MID
+beh_mid_money_run_1
+beh_mid_money_run_2
+beh_mid_money_total
+```{r}
+mid1<-d2[[3]] %>%
+  select(subjectkey, beh_mid_money_run_1, beh_mid_money_run_2, beh_mid_money_total)
+dim(mid1)
+```
+bms_rwd_pos_fdbk_run_1_rate
+bms_rwd_pos_fdbk_run_1_rt
+bms_rwd_pos_fdbk_run_1_ct
+bms_rwd_pos_fdbk_run_2_ct
+bms_rwd_pos_fdbk_run_2_rate
+bms_rwd_pos_fdbk_run_2_rt
+```{r}
+mid2<-d2[[3]] %>%
+  select(subjectkey, bms_rwd_pos_fdbk_run_1_rate, bms_rwd_pos_fdbk_run_1_rt, bms_rwd_pos_fdbk_run_1_ct, bms_rwd_pos_fdbk_run_2_ct, bms_rwd_pos_fdbk_run_2_rate, bms_rwd_pos_fdbk_run_2_rt)
+dim(mid2)
+```
+
+bms_rwd_neg_fdbk_run_1_ct
+bms_rwd_neg_fdbk_run_1_rate
+bms_rwd_neg_fdbk_run_2_ct
+bms_rwd_neg_fdbk_run_2_rate
+```{r}
+mid4<-d2[[3]] %>%
+  select(subjectkey, bms_rwd_neg_fdbk_run_1_ct, bms_rwd_neg_fdbk_run_1_rate, bms_rwd_neg_fdbk_run_2_ct, bms_rwd_neg_fdbk_run_2_rate)
+dim(mid4)
+```
+bml_rwd_pos_fdbk_run_1_ct
+bml_rwd_pos_fdbk_run_1_rate
+bml_rwd_pos_fdbk_run_1_rt
+```{r}
+mid5<-d2[[3]] %>%
+  select(subjectkey, bml_rwd_pos_fdbk_run_1_ct, bml_rwd_pos_fdbk_run_1_rate, bml_rwd_pos_fdbk_run_1_rt)
+dim(mid5)
+```
+bml_rwd_pos_fdbk_run_2_ct
+bml_rwd_pos_fdbk_run_2_rate
+bml_rwd_pos_fdbk_run_2_rt
+```{r}
+mid6<-d2[[3]] %>%
+  select(subjectkey, bml_rwd_pos_fdbk_run_2_ct, bml_rwd_pos_fdbk_run_2_rate, bml_rwd_pos_fdbk_run_2_rt)
+dim(mid6)
+```
+bml_rwd_neg_fdbk_run_1_ct
+bml_rwd_neg_fdbk_run_1_rate
+bml_rwd_neg_fdbk_run_2_ct
+bml_rwd_neg_fdbk_run_2_rate
+```{r}
+mid7<-d2[[3]] %>%
+  select(subjectkey, bml_rwd_neg_fdbk_run_1_ct, bml_rwd_neg_fdbk_run_1_rate, bml_rwd_neg_fdbk_run_2_ct, bml_rwd_neg_fdbk_run_2_rate)
+dim(mid7)
+```
+bms_loss_pos_fdbk_run_1_ct
+bms_loss_pos_fdbk_run_1_rate
+bms_loss_pos_fdbk_run_1_rt
+bms_loss_pos_fdbk_run_2_ct
+bms_loss_pos_fdbk_run_2_rate
+bms_loss_pos_fdbk_run_2_rt
+```{r}
+mid8<-d2[[3]] %>%
+  select(subjectkey, bms_loss_pos_fdbk_run_1_ct, bms_loss_pos_fdbk_run_1_rate, bms_loss_pos_fdbk_run_1_rt, bms_loss_pos_fdbk_run_2_ct, bms_loss_pos_fdbk_run_2_rate, bms_loss_pos_fdbk_run_2_rt)
+dim(mid8)
+```
+bms_loss_neg_fdbk_run_1_ct
+bms_loss_neg_fdbk_run_1_rate
+bms_loss_neg_fdbk_run_2_ct
+bms_loss_neg_fdbk_run_2_rate
+bml_loss_pos_fdbk_run_1_ct
+bml_loss_pos_fdbk_run_1_rate
+bml_loss_pos_fdbk_run_1_rt
+```{r}
+mid9<-d2[[3]] %>%
+  select(subjectkey, bms_loss_neg_fdbk_run_1_ct, bms_loss_neg_fdbk_run_1_rate, bms_loss_neg_fdbk_run_2_ct, bms_loss_neg_fdbk_run_2_rate, bml_loss_pos_fdbk_run_1_ct, bml_loss_pos_fdbk_run_1_rate, bml_loss_pos_fdbk_run_1_rt)
+dim(mid9)
+```
+
+bml_loss_pos_fdbk_run_2_ct
+bml_loss_pos_fdbk_run_2_rate
+bml_loss_pos_fdbk_run_2_rt
+bml_loss_neg_fdbk_run_1_ct
+bml_loss_neg_fdbk_run_1_rate
+bml_loss_neg_fdbk_run_2_ct
+bml_loss_neg_fdbk_run_2_rate
+```{r}
+mid10<-d2[[3]] %>%
+  select(subjectkey, bml_loss_pos_fdbk_run_2_ct, bml_loss_pos_fdbk_run_2_rate, bml_loss_pos_fdbk_run_2_rt, bml_loss_neg_fdbk_run_1_ct, bml_loss_neg_fdbk_run_1_rate, bml_loss_neg_fdbk_run_2_ct, bml_loss_neg_fdbk_run_2_rate)
+dim(mid10)
+```
+bmn_pos_fdbk_run_1_ct
+bmn_pos_fdbk_run_1_rate
+bmn_pos_fdbk_run_1_rt
+bmn_pos_fdbk_run_2_ct
+bmn_pos_fdbk_run_2_rate
+bmn_pos_fdbk_run_2_rt
+bmn_neg_fdbk_run_1_ct
+bmn_neg_fdbk_run_1_rate
+bmn_neg_fdbk_run_2_ct
+bmn_neg_fdbk_run_2_rate
+```{r}
+mid11<-d2[[3]] %>%
+  select(subjectkey, bmn_pos_fdbk_run_1_ct, bmn_pos_fdbk_run_1_rate, bmn_pos_fdbk_run_1_rt, bmn_pos_fdbk_run_2_ct, bmn_pos_fdbk_run_2_rate, bmn_pos_fdbk_run_2_rt, bmn_neg_fdbk_run_1_ct, bmn_neg_fdbk_run_1_rate, bmn_neg_fdbk_run_2_ct, bmn_neg_fdbk_run_2_rate)
+dim(mid11)
+```
+
+```{r}
+midA<-merge(mid1,mid2)
+dim(midA)
+midB<-merge(midA,mid4)
+midC<-merge(midB,mid5)
+midD<-merge(midC,mid6)
+midE<-merge(midD,mid7)
+midF<-merge(midE,mid8)
+midG<-merge(midF,mid9)
+midH<-merge(midG,mid10)
+midI<-merge(midH,mid11)
+dim(midI)
+```
+```{r}
+df<-merge(df3, midI)
+dim(df)
+```
+```{r}
+dfinal0<-merge(df,pube)
+dfinal1<-merge(dfinal0, demos)
+dfinal2<-merge(dfinal1, anth)
+dfinal3<-merge(dfinal2, horm)
+df_final<-dfinal3
+```
+
+```{r}
+rm(d2)
+rm(df0, df1, df2, df3)
+rm(anth, dd2, demos, horm, horQC, med1, med3, meds, mid1, mid10, mid11, mid12, mid2, mid4, mid5, mid6, mid7, mid8, mid9, midA, midB, midC, midD, midE, midF, midG, midH, midI, MIDQC, mx, pube)
+rm(df, dfinal1, dfinal2, dfinal3)
+```
+

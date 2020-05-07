@@ -1,0 +1,209 @@
+---
+title: "TOS 2020 analysis chap 2: Cleaning more"
+output: html_notebook
+---
+```{r}
+load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020RData.RData") # from TOS 2020 chap 1 
+```
+
+# Variables
+
+## Gordon 1
+subjectkey
+midanticrwvsntbetactx?rl?hgp### <<< mean beta weight for MID anticipation of reward versus neutral contrast 
+```{r}
+summary(d2[[6]]$subjectkey)
+levels(as.factor(d2[[6]]$subjectkey))
+dim(d2[[6]])
+
+d1<-d2[[6]] %>%
+  select(subjectkey, contains("midanticrwvsntbetactx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d1)
+```
+
+midanticlossvsntbetactx?rl?hgp### <<< mean beta weight for MID anticipation of loss versus neutral contrast 
+```{r}
+dd2<-d2[[6]] %>%
+  select(subjectkey, contains("midanticlossvsntbetactx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(dd2)
+```
+
+midrwposvsnegfkbetactx?rl?hgp### <<< mean beta weight for MID reward positive versus negative feeback contrast 
+```{r}
+d3<-d2[[6]] %>%
+  select(contains("midrwposvsnegfkbetactx"),subjectkey)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d3)
+```
+lmt_run <<< run
+fmri_beta_gparc_mean_motion <<< motion
+```{r}
+d4<-d2[[6]] %>%
+  select(subjectkey, lmt_run, fmri_beta_gparc_mean_motion)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d4)
+```
+
+```{r}
+grd0.1<-merge(d1,dd2)
+grd0.2<-merge(grd0.1,d4)
+grd1<-merge(grd0.2,d3)
+dim(grd1)
+```
+
+## Gordon 2
+subjectkey
+midrwposvsnegfkbctx?rl?hgp### <<< mean beta weight for MID reward positive versus negative feeback contrast 
+```{r}
+d5<-d2[[7]] %>%
+  select(subjectkey, contains("midrwposvsnegfkbctx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d5)
+```
+midlossposvsnegfkbctx?rl?hgp### <<< mean beta weight for MID loss positive versus negative feedback contrast 
+```{r}
+d6<-d2[[7]] %>%
+  select(subjectkey, contains("midlossposvsnegfkbctx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d6)
+```
+midanticlgrwvsntbctxlhgp1 <<< mean beta weight for MID anticipation of large reward versus neutral contrast 
+```{r}
+d7<-d2[[7]] %>%
+  select(subjectkey, contains("midanticlgrwvsntbctx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d7)
+```
+midanticslrwvsntbctxlhgp1 <<< mean beta weight for MID anticipation of small reward versus neutral contrast 
+```{r}
+d8<-d2[[7]] %>%
+  select(subjectkey, contains("midanticslrwvsntbctx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d8)
+```
+midrwposvsnegfkbetactxrhgp309 <<< mean beta weight for MID reward positive versus negative feeback contrast 
+```{r}
+d9<-d2[[7]] %>%
+  select(subjectkey, contains("midrwposvsnegfkbetactx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d9)
+```
+
+```{r}
+grd2.1<-merge(d5,d6)
+grd2.2<-merge(grd2.1, d7)
+grd2.3<-merge(grd2.2,d8)
+grd2<-merge(grd2.3, d9)
+dim(grd2)
+```
+
+## Gordon 3
+subjectkey
+midanticslrwvsntbctx?rl?hgp### <<< mean beta weight for MID anticipation of small reward versus neutral contrast 
+```{r}
+d10<-d2[[8]] %>%
+  select(subjectkey, contains("midanticslrwvsntbctx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d10)
+```
+midanticlgvsslrwbctx?rl?hgp### <<< mean beta weight for MID anticipation of large versus small reward contrast 
+```{r}
+d11<-d2[[8]] %>%
+  select(subjectkey, contains("midanticlgvsslrwbctx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d11)
+```
+midanticlglossvsntbctxlhgp1 <<< mean beta weight for MID anticipation of large loss versus neutral contrast 
+```{r}
+d12<-d2[[8]] %>%
+  select(subjectkey, contains("midanticlglossvsntbctx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d12)
+```
+midanticsllossvsntbctxlhgp1 <<< mean beta weight for MID anticipation of small loss versus neutral contrast 
+```{r}
+d13<-d2[[8]] %>%
+  select(subjectkey, contains("midanticsllossvsntbctx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d13)
+```
+midanticslrwvsntbctxrhgp293 <<< mean beta weight for MID anticipation of small reward versus neutral contrast 
+```{r}
+d14<-d2[[8]] %>%
+  select(subjectkey, contains("midanticslrwvsntbctx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d14)
+```
+
+```{r}
+grd3.1<-merge(d10,d11)
+grd3.2<-merge(grd3.1, d12)
+grd3.3<-merge(grd3.2, d13)
+grd3<-merge(grd3.3, d14)
+dim(grd3)
+```
+
+## Gordon 4
+subjectkey
+midanticsllossvsntbctxrhgp271 <<< mean beta weight for MID anticipation of small loss versus neutral contrast
+```{r}
+d15<-d2[[9]] %>%
+  select(subjectkey, contains("midanticsllossvsntbctx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+
+
+head(d15)
+```
+midanticlgvssllossbctxlhgp1 <<< mean beta weight for MID anticipation of small versus large loss contrast 
+```{r}
+d16<-d2[[9]] %>%
+  select(subjectkey, contains("midanticlgvssllossbctx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d16)
+```
+midanticsllossvsntbctxrhgp268 <<< mean beta weight for MID anticipation of small loss versus neutral contrast
+```{r}
+d17<-d2[[9]] %>%
+  select(subjectkey, contains("midanticsllossvsntbctx"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(d17)
+```
+```{r}
+grd4.1<-merge(d15, d16)
+grd4<-merge(grd4.1, d17)
+```
+
+```{r}
+gord0<-merge(grd1, grd2)
+gord1<-merge(gord0, grd3)
+gord<-merge(gord1, grd4)
+dim(gord)
+```
+## remove unused variables
+```{r}
+rm(d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17)
+rm(grd1,grd2, grd3, grd4)
+rm(grd0.1,grd.0.2,grd2.1, grd2.2, grd2.3, grd3.1, grd3.2,  grd3.3)
+rm(grd0.2, grd4.1)
+rm(gord0, gord1)
+```
+
