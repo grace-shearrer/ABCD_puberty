@@ -3,7 +3,7 @@ title: "TOS 2020 analysis chap 2: Cleaning more"
 output: html_notebook
 ---
 ```{r}
-load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020RData.RData") # from TOS 2020 chap 1 
+load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp1.RData") # from TOS 2020 chap 1 
 ```
 
 # Variables
@@ -205,5 +205,8 @@ rm(grd1,grd2, grd3, grd4)
 rm(grd0.1,grd.0.2,grd2.1, grd2.2, grd2.3, grd3.1, grd3.2,  grd3.3)
 rm(grd0.2, grd4.1)
 rm(gord0, gord1)
+```
+```{r}
+save(gord,df_final,file="~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp2.RData")
 ```
 

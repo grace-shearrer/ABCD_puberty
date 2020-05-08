@@ -13,18 +13,17 @@ library(childsds)
 
 # Load data
 ```{r}
-load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/POST_CLEAN.RData")
+load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp2.RData")
 ```
 
 # combine datasets
 ```{r}
-dim(df)
 dim(gord)
 
 data<-merge(df_final, gord)
 dim(data)
 rm(df_final, gord)
-rm(list_of_files)
+summary(as.factor(data$gender))
 ```
 
 ```{r}
@@ -34,6 +33,7 @@ data %<>%
        mutate_each_(funs(factor(.)),fcols)
 str(data)
 fcols[2:22]
+data$gender
 ```
 
 # Descriptives
@@ -41,7 +41,7 @@ fcols[2:22]
 demo_sex_v2	What sex was the child assigned at birth, on the original birth certificate? 
 ```{r}
 data %>% select(fcols[2:22]) %>% summary()
-data$gender<-as.character(data$gender)
+#data$gender<-as.character(data$gender)
 ```
 # Calculating BMI
 ```{r}
@@ -61,13 +61,7 @@ data %<>% group_by(subjectkey) %>%
 summary(as.numeric(data$BMIper))
 # 703 x weight (lbs) / [height (in)]2
 ```
-# check
-```{r}
-check<-c("subjectkey","gender","interview_age" ,"age_years","anthroweightcalc","anthroheightcalc","BMI","BMIsds", "BMIper", "")
-ch<-data[check]
-head(ch)
-# Looks good checked with https://www.cdc.gov/healthyweight/bmi/result.html?&method=english&gender=m&age_y=0&age_m=128&hinches=57.50&twp=65
-```
+
 
 # BMI categories
 ```{r}
@@ -110,16 +104,13 @@ For Items 1 through 4 on the girls’ version and all items on the boys’ versi
 
 ## Puberty Category Scores are computed using the criteria of Crockett (1988, unpublished) by totaling the scale values given above.
 ```{r}
-data[data == 999.0] <- NA
+# data[data == 999.0] <- NA
 ```
 
 ```{r}
 data %>%
-  select(pds_bdyhair_y,pds_ht2_y, pds_skin2_y,pds_m5_y, pds_m4_y) %>%
+  select(subjectkey,pds_bdyhair_y,pds_ht2_y, pds_skin2_y,pds_m5_y, pds_m4_y) %>%
   summary()
-```
-```{r}
-load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/bak.RData")
 ```
 ### To compute Puberty Category Scores for boys use body hair growth, voice change, and facial hair growth as follows:
 Prepubertal = 3
@@ -129,11 +120,31 @@ Late pubertal = 9-11
 Postpubertal = 12
 
 ```{r}
-data_m<-data %>%
-  subset(gender == "M") %>%
-  mutate(PCSum= sum(pds_bdyhair_y,pds_ht2_y, pds_skin2_y,pds_m5_y, pds_m4_y))
-summary(data_m$PCSum)
+data_m<-subset(data, data$gender == "M")
+data_m<-data_m[!(data_m$pds_bdyhair_y >= 999),]
+data_m<-data_m[!(data_m$pds_ht2_y >= 999),]
+data_m<-data_m[!(data_m$pds_skin2_y >= 999),]
+data_m<-data_m[!(data_m$pds_m5_y >= 999),]
+data_m<-data_m[!(data_m$pds_m4_y >= 999),]
 
+sum2=c("pds_ht2_y","pds_skin2_y","pds_bdyhair_y","pds_m4_y","pds_m5_y")
+data_m$PCSum<-rowSums(data_m[sum2])
+data_m$PCSum
+```
+```{r}
+data_f<-subset(data, data$gender == "F")
+data_f<-data_f[!(data_f$pds_bdyhair_y >= 999),]
+data_f<-data_f[!(data_f$pds_ht2_y >= 999),]
+data_f<-data_f[!(data_f$pds_skin2_y >= 999),]
+data_f<-data_f[!(data_f$pds_f4_2_y >= 999),]
+data_f<-data_f[!(data_f$pds_f5_y >= 999),]
+
+sum2=c("pds_ht2_y","pds_skin2_y","pds_bdyhair_y","pds_f5_y","pds_f4_2_y")
+data_f$PCSum<-rowSums(data_f[sum2])
+data_f$PCSum
+```
+
+```{r}
 data_early<- data_m %>%
   subset(PCSum == 5) %>%
   mutate(PCScore = case_when(
@@ -164,22 +175,20 @@ Early Puberty = 3 and no menarche
 Midpubertal = > 3 and no menarche
 Late Puberty = <= 7 and menarche
 Postpubertal = 8 and menarche.
-```{r}
-data_f<-data %>%
-  subset(gender == "F") %>%
-  mutate(PCSum= sum(pds_bdyhair_y,pds_ht2_y, pds_skin2_y,pds_f4_2_y, pds_f5_y))
-summary(data_f$pds_f5_y)
 
+
+```{r}
 data_midF<- data_f %>%
-  subset(PCSum > 3) %>%
+  subset(PCSum > 3 & pds_f5_y != 4) %>%
   mutate(PCScore = case_when(
-    pds_f5_y != 4  ~ "mid",
+    PCSum > 3 & pds_f5_y != 4  ~ "mid",
     TRUE ~ "mid_x"))
 
+
 data_lateF<- data_f %>%
-  subset(PCSum <= 7) %>%
+  subset(PCSum <= 7 & pds_f5_y == 4) %>%
   mutate(PCScore = case_when(
-    pds_f5_y == 4  ~ "late",
+    PCSum <= 7 & pds_f5_y == 4  ~ "late",
     TRUE ~ "late_x"))
 
 data_postF<- data_f %>%
@@ -187,8 +196,11 @@ data_postF<- data_f %>%
   mutate(PCScore = case_when(
     PCSum > 7  ~ "post",
     TRUE ~ "post_x"))
+summary(data_lateF$PCSum)
+
 
 data_female<-rbind(data_midF, data_lateF, data_postF)
+summary(as.factor(data_female$PCScore))
 ```
 
 ```{r}
@@ -297,6 +309,10 @@ data_all %<>%
 ```
 
 ```{r}
-rm(ch, data, data_early, data_mid, data_f, data_female, data_late, data_lateF, data_m, data_male, data_midF, data_post, data_postF, data_prep, df, dfinal0)
+#rm(ch, data, data_early, data_mid, data_f, data_female, data_late, data_lateF, data_m, data_male, data_midF, data_post, data_postF, data_prep, df, dfinal0)
+```
+
+```{r}
+save(data_all, file="~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp3.RData")
 ```
 

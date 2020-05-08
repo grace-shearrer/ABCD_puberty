@@ -1,0 +1,97 @@
+---
+title: "TOS 2020 analysis chap 2.2: Things I forgot (the subcortex)"
+output: html_notebook
+---
+
+```{r}
+aseg<-read.table("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/midaparc01.txt", header=T, sep="\t")
+QC<-read.table("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/abcd_mrirstv01.txt", header=T, sep="\t")
+```
+
+```{r}
+scanner_type<-QC%>%
+  select(subjectkey, scanner_type_pd)
+head(scanner_type)
+summary(as.factor(scanner_type$scanner_type_pd))
+```
+
+
+```{r}
+caudate<-aseg %>%
+  select(subjectkey, contains("caudate"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(caudate)
+```
+```{r}
+putamen<-aseg %>%
+  select(subjectkey, contains("putamen"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(putamen)
+```
+
+```{r}
+ventraldc<-aseg %>%
+  select(subjectkey, contains("ventraldc"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(ventraldc)
+```
+
+```{r}
+pallidum<-aseg %>%
+  select(subjectkey, contains("pallidum"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(pallidum)
+```
+
+```{r}
+accarea<-aseg %>%
+  select(subjectkey, contains("accarea"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(accarea)
+```
+
+```{r}
+thlpp<-aseg %>%
+  select(subjectkey, contains("thlpp"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(thlpp)
+```
+```{r}
+amygdala<-aseg %>%
+  select(subjectkey, contains("amygdala"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(amygdala)
+```
+```{r}
+hp<-aseg %>%
+  select(subjectkey, contains("hp"))%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(hp)
+```
+
+```{r}
+subcort0<-merge(accarea, amygdala)
+subcort1<-merge(subcort0, caudate)
+subcort2<-merge(subcort1, hp)
+subcort3<-merge(subcort2, pallidum)
+subcort4<-merge(subcort3, putamen)
+subcort5<-merge(subcort4, thlpp)
+subcort<-merge(subcort5, ventraldc)
+dim(subcort)
+```
+```{r}
+df_subcort<-merge(scanner_type, subcort)
+dim(df_subcort)
+```
+```{r}
+save(df_subcort, file="~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp2_1.RData")
+```
+

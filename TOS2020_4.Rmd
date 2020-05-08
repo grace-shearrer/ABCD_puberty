@@ -7,18 +7,159 @@ Aim 0. Relationship between testosterone in puberty by obesity and sex
 Hyp 0. Testosterone will show a sex by puberty by obesity difference, overall boys will show higher testosterone over puberty with a small nadir at mid point, this will be more pronounced in boys with central obesity. Girls will over all show lower testosterone over puberty, with a slight peak at mid puberty, and again this will be more pronounced in girls with central obesity.
 
 Aim 1. Anticipation vs. Receipt in the brain during the MID by puberty by obesity
-Hyp 1. Children with central obesity will show higher anticipation in stratal regions compared to the actual receipt compared to children without central obesity. This will be exaggerated in mid pubertal children
+Hyp 1. Children with central obesity will show higher anticipation in striatal regions compared to the actual receipt compared to children without central obesity. This will be exaggerated in mid pubertal children
 
 Aim 2. Effect of testosterone on reward vs. no reward between sex by obesity
-Hyp 2. Girls with high testosterone will show lower stratal response to reward compared to no reward. Boys on the other hand will show increased response to reward compared to no reward in the stiatum. In the posterior cingulate cortex high testosterone will be related to decreased BOLD response in the reward vs. no reward trials, this will mean that girls will have a diminished BOLD response in the posterior cingulate. In the ventromedial prefrontal cortex, BOLD response in the reward vs. no reward contrast will be inversely related to testosterone concentrations, this will relate to a lower BOLD response in the ventromedial prefrontal cortex in girls. 
+Hyp 2. Girls with high testosterone will show lower striatal response to reward compared to no reward. Boys on the other hand will show increased response to reward compared to no reward in the stiatum. In the posterior cingulate cortex high testosterone will be related to decreased BOLD response in the reward vs. no reward trials, this will mean that girls will have a diminished BOLD response in the posterior cingulate. In the ventromedial prefrontal cortex, BOLD response in the reward vs. no reward contrast will be inversely related to testosterone concentrations, this will relate to a lower BOLD response in the ventromedial prefrontal cortex in girls. 
 
 ```{r}
 library(tidyverse)
+library(plyr)
 library(psych)
 library(ggplot2)
+library(lm.beta)
+library(lme4)
+library(emmeans)
 ```
 
 ```{r}
-load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_3.RData")
+load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp3.RData")
+load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp2_1.RData")
 ```
+
+```{r}
+head(data_all)
+data<-merge(data_all, df_subcort)
+data_all<-data
+```
+
+
+```{r}
+#data_all<-data_all[data_all$PCScore != "mid_x", ] # removing mid_x, as they don't appear to fit into the predefined groups
+#data_all<-data_all[!is.na(data_all$subjectkey), ]
+
+data_all$gender<-as.factor(data_all$gender)
+levels(as.factor(data_all$RaceEth))
+data_all$RaceEth <- factor(data_all$RaceEth, levels = c("white", 
+                                  "white and Hispanic",
+                                  "Asian Indian", 
+                                  "Asian Indian and Hispanic", 
+                                  "Black/African American", 
+                                  "Black/African American and Hispanic",
+                                  "Chinese", 
+                                  "Filipino", 
+                                  "Filipino and Hispanic", 
+                                  "Japanese", 
+                                  "Korean", 
+                                  "Korean and Hispanic", 
+                                  "Samoan", 
+                                  "Vietnamese",
+                                  "Other Asian", 
+                                  "Other Asian and Hispanic", 
+                                  "Native American", 
+                                  "Native American and Hispanic", 
+                                  "Other pacific islander", 
+                                  "Other Race", 
+                                  "Other Race and Hispanic", 
+                                  "Refused answer and Hispanic",
+                                  "Don't know and Hispanic"
+                                 ))
+
+summary(data_all$RaceEth)
+levels(as.factor(data_all$SES))
+levels(as.factor(data_all$gender))
+data_all$gender<-factor(data_all$gender, levels = c("M","F"))
+summary(data_all$gender)
+
+levels(as.factor(data_all$PCScore))
+data_all$PCScore<-factor(data_all$PCScore, levels = c ("early", "mid", "late", "post"))
+summary(data_all$PCScore)
+
+levels(as.factor(data_all$ovob))
+data_all$ovob<-factor(data_all$ovob, levels = c("average", "low", "overweight", "obese"))
+
+levels(as.factor(data_all$central_ob))
+```
+
+# Checking normality
+```{r}
+hist(data_all$interview_age)
+hist(subset(data_all, data_all$gender == "F")$PCSum)
+hist(subset(data_all, data_all$gender == "M")$PCSum)
+summary(data_all$gender)
+# Testosterone
+hist(data_all$hormone_scr_ert_mean) # skewed
+hist(sqrt(data_all$hormone_scr_ert_mean)) # Better
+data_all$sqrt_T<-sqrt(data_all$hormone_scr_ert_mean)
+# DHEA
+hist(data_all$hormone_scr_dhea_mean) # skewed
+hist(sqrt(data_all$hormone_scr_dhea_mean)) # Better
+data_all$sqrt_DHEA<-sqrt(data_all$hormone_scr_dhea_mean)
+# Estrogen
+hist(data_all$hormone_scr_hse_mean) # OK
+```
+
+```{r}
+mytable <- xtabs(~PCScore+gender+central_ob, data=data_all)
+ftable(mytable) # print table
+summary(mytable) # chi-square test of indepedence
+```
+
+```{r}
+mytable <- xtabs(~PCScore+gender, data=data_all)
+ftable(mytable) # print table
+summary(mytable) # chi-square test of indepedence
+```
+
+## Aim 0. Relationship between testosterone in puberty by obesity and sex
+## Hyp 0. Testosterone will show a sex by puberty by obesity difference, overall boys will show higher testosterone over puberty with a small nadir at mid point, this will be more pronounced in boys with central obesity. Girls will over all show lower testosterone over puberty, with a slight peak at mid puberty, and again this will be more pronounced in girls with central obesity.
+
+```{r}
+mod0.0<-lm(sqrt_T ~ 1+RaceEth+SES+age_years, data=data_all)
+summary(mod0.0)
+plot(mod0.0)
+```
+
+
+
+```{r}
+summary(data_all$BMIsds)
+mod0.2F<-lm(sqrt_T ~PCSum+RaceEth+age_years, data=subset(data_all, data_all$gender == "F"))
+summary(mod0.2F)
+lm.beta(mod0.2F)
+plot(mod0.2F)
+```
+
+```{r}
+
+ggplot(data_all, aes(x=PCSum, y=hormone_scr_ert_mean, color = gender)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()   # Don't add shaded confidence region
+
+ggplot(subset(data_all, data_all$gender == "F"), aes(x=PCSum, y=hormone_scr_ert_mean, color = ovob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm)+ theme_classic()    # Don't add shaded confidence region
+
+ggplot(subset(data_all, data_all$gender == "M"), aes(x=PCSum, y=hormone_scr_ert_mean, color = ovob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+```
+
+
+
+```{r}
+summary(data_all$ovob)
+mod0.2M<-lm(sqrt_T ~PCSum+RaceEth+SES+age_years, data=subset(data_all, data_all$gender == "M"))
+summary(mod0.2M)
+lm.beta(mod0.2M)
+plot(mod0.2M)
+```
+
+### Aim 1. Anticipation vs. Receipt in the brain during the MID by puberty by obesity
+### Hyp 1. Children with central obesity will show higher anticipation in striatal regions compared to the actual receipt compared to children without central obesity. This will be exaggerated in mid pubertal children
+
+```{r}
+save(data_all, file = "~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp4.RData")
+```
+
 
