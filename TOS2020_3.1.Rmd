@@ -1,0 +1,168 @@
+---
+title: "TOS2020 chapter 3.5: final combinations"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(plyr)
+library(psych)
+library(ggplot2)
+library(lm.beta)
+library(lme4)
+library(emmeans)
+```
+
+```{r}
+load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp3.RData")
+load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp2_1.RData")
+```
+
+```{r}
+#data_all<-data_all[data_all$PCScore != "mid_x", ] # removing mid_x, as they don't appear to fit into the predefined groups
+#data_all<-data_all[!is.na(data_all$subjectkey), ]
+
+data_all$gender<-as.factor(data_all$gender)
+levels(as.factor(data_all$RaceEth))
+data_all$RaceEth <- factor(data_all$RaceEth, levels = c("white", 
+                                  "white and Hispanic",
+                                  "Asian Indian", 
+                                  "Asian Indian and Hispanic", 
+                                  "Black/African American", 
+                                  "Black/African American and Hispanic",
+                                  "Chinese", 
+                                  "Filipino", 
+                                  "Filipino and Hispanic", 
+                                  "Japanese", 
+                                  "Korean", 
+                                  "Korean and Hispanic", 
+                                  "Samoan", 
+                                  "Vietnamese",
+                                  "Other Asian", 
+                                  "Other Asian and Hispanic", 
+                                  "Native American", 
+                                  "Native American and Hispanic", 
+                                  "Other pacific islander", 
+                                  "Other Race", 
+                                  "Other Race and Hispanic", 
+                                  "Refused answer and Hispanic",
+                                  "Don't know and Hispanic"
+                                 ))
+
+summary(data_all$RaceEth)
+levels(as.factor(data_all$SES))
+levels(as.factor(data_all$gender))
+data_all$gender<-factor(data_all$gender, levels = c("M","F"))
+summary(data_all$gender)
+
+levels(as.factor(data_all$PCScore))
+data_all$PCScore<-factor(data_all$PCScore, levels = c ("early", "mid", "late", "post"))
+summary(data_all$PCScore)
+
+levels(as.factor(data_all$ovob))
+data_all$ovob<-factor(data_all$ovob, levels = c("average", "low", "overweight", "obese"))
+
+levels(as.factor(data_all$central_ob))
+```
+
+```{r}
+scanner_type<-df_subcort %>%
+  select(subjectkey, scanner_type_pd)
+  
+subcort<-df_subcort %>%
+  select(subjectkey, contains("caudate"),contains("putamen"),contains("pallidum"), contains("thlpp"),contains("amygdala"), contains("accarea"), contains("ventraldc"), contains("hthp"), scanner_type_pd)
+# head(subcort)
+
+# data_all$WCsds
+
+base<-data_all %>%
+  select(subjectkey, subjectkey, interview_age, gender, anthroheightcalc, anthroweightcalc, anthro_waist_cm, PCSum, RaceEth, SES, age_years, PCScore, gender, hormone_scr_hse_mean, hormone_scr_dhea_mean, hormone_scr_ert_mean, BMIsds, BMIper, central_ob, ovob, WCsds, fmri_beta_gparc_mean_motion)
+
+df<- merge(base, subcort)
+```
+
+#### Caudate
+```{r}
+AntciCaudate<- df %>%
+  select(subjectkey, contains("mdacrwvsnt")) %>%
+  select(subjectkey, contains("caudate"))
+
+RewCaudate<- df %>%
+  select(subjectkey, contains("midrwpvnfkb")) %>%
+  select(subjectkey, contains("caudate"))
+
+df$change_caudate_L<- RewCaudate$midrwpvnfkblcaudate - AntciCaudate$mdacrwvsntblcaudate
+df$change_caudate_R<- RewCaudate$midrwpvnfkbrightcaudate - AntciCaudate$mdacrwvsntbrightcaudate
+
+d<-df[!is.na(df$PCScore), ]
+```
+
+### Putamen
+```{r}
+AntciPutamen<- d %>%
+  select(subjectkey, contains("mdacrwvsnt")) %>%
+  select(subjectkey, contains("putamen"))
+
+RewPutamen<- d %>%
+  select(subjectkey, contains("midrwpvnfkb")) %>%
+  select(subjectkey, contains("putamen"))
+
+d$change_putamen_L<- RewPutamen$midrwpvnfkblputamen - AntciPutamen$mdacrwvsntblputamen
+d$change_putamen_R<- RewPutamen$midrwpvnfkbrightputamen - AntciPutamen$mdacrwvsntbrightputamen
+```
+
+### Posterior cingulate
+```{r}
+# PC posterior cingulate 
+RewPCLh<- data_all %>%
+  select(subjectkey, midrwposvsnegfkbetactxlhgp12,midrwposvsnegfkbetactxlhgp13, midrwposvsnegfkbetactxlhgp14, midrwposvsnegfkbetactxlhgp20, midrwposvsnegfkbetactxlhgp89, midrwposvsnegfkbetactxlhgp93, midrwposvsnegfkbetactxlhgp150) 
+
+fcols<-c("midrwposvsnegfkbetactxlhgp12","midrwposvsnegfkbetactxlhgp13","midrwposvsnegfkbetactxlhgp14", "midrwposvsnegfkbetactxlhgp20", "midrwposvsnegfkbetactxlhgp89", "midrwposvsnegfkbetactxlhgp93", "midrwposvsnegfkbetactxlhgp150")
+
+RewPCLh$Reward_meanPClh <- rowMeans(RewPCLh[fcols], na.rm=TRUE)
+```
+
+```{r}
+RewPCRh<- data_all %>%
+  select(subjectkey, contains("midrwposvsnegfkbetactxrh"))%>%
+  select(subjectkey, contains("hgp162"), contains("hgp162"), contains("hgp173"), contains("hgp174"), contains("hgp176"), contains("hgp180"), contains("hgp186"), contains("hgp254"))
+dim(RewPCRh)
+
+RewPCRh$Reward_meanPCrh <- rowMeans(RewPCRh[,2:8], na.rm=TRUE)
+```
+
+```{r}
+LossPCLh<- data_all %>%
+  select(subjectkey, midlossposvsnegfkbctxlhgp12, midlossposvsnegfkbctxlhgp13, midlossposvsnegfkbctxlhgp14, midlossposvsnegfkbctxlhgp20, midlossposvsnegfkbctxlhgp89, midlossposvsnegfkbctxlhgp93, midlossposvsnegfkbctxlhgp150)
+dim(LossPCLh)
+LossPCLh$Loss_meanPClh <- rowMeans(LossPCLh[,2:8], na.rm=TRUE)
+colnames(LossPCLh)
+```
+
+```{r}
+LossPCRh<- data_all %>%
+  select(subjectkey, contains("midlossposvsnegfkbctxrh"))%>%
+  select(subjectkey, contains("hgp162"), contains("hgp162"), contains("hgp173"), contains("hgp174"), contains("hgp176"), contains("hgp180"), contains("hgp186"), contains("hgp254"))
+dim(LossPCRh)
+
+LossPCRh$Loss_meanPCrh <- rowMeans(LossPCRh[,2:8], na.rm=TRUE)
+```
+
+```{r}
+PC_L<-merge(LossPCLh, RewPCLh)
+dim(PC_L)
+PC_R<-merge(LossPCRh, RewPCRh)
+PC<-merge(PC_L, PC_R)
+dim(PC)
+PC$RewVLoss_PC_L<- PC$Reward_meanPClh - PC$Loss_meanPClh
+PC$RewVLoss_PC_R<- PC$Reward_meanPCrh - PC$Loss_meanPCrh
+summary(PC$RewVLoss_PC_R)
+df2<-merge(base, PC)
+dim(df2)
+```
+
+
+```{r}
+save(data_all, df, d, df2, file="~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp3_1.RData")
+```
+

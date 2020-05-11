@@ -4,8 +4,8 @@ output: html_notebook
 ---
 
 ```{r}
-aseg<-read.table("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/midaparc01.txt", header=T, sep="\t")
-QC<-read.table("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/abcd_mrirstv01.txt", header=T, sep="\t")
+aseg<-read.table("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/chp21/midaparc01.txt", header=T, sep="\t")
+QC<-read.table("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/chp21/abcd_mrirstv01.txt", header=T, sep="\t")
 ```
 
 ```{r}
@@ -90,8 +90,9 @@ dim(subcort)
 ```{r}
 df_subcort<-merge(scanner_type, subcort)
 dim(df_subcort)
+df_subcort$scanner_type_pd
 ```
 ```{r}
-save(df_subcort, file="~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp2_1.RData")
+#save(df_subcort, file="~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp2_1.RData")
 ```
 

@@ -23,62 +23,7 @@ library(emmeans)
 ```
 
 ```{r}
-load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp3.RData")
-load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp2_1.RData")
-```
-
-```{r}
-head(data_all)
-data<-merge(data_all, df_subcort)
-data_all<-data
-```
-
-
-```{r}
-#data_all<-data_all[data_all$PCScore != "mid_x", ] # removing mid_x, as they don't appear to fit into the predefined groups
-#data_all<-data_all[!is.na(data_all$subjectkey), ]
-
-data_all$gender<-as.factor(data_all$gender)
-levels(as.factor(data_all$RaceEth))
-data_all$RaceEth <- factor(data_all$RaceEth, levels = c("white", 
-                                  "white and Hispanic",
-                                  "Asian Indian", 
-                                  "Asian Indian and Hispanic", 
-                                  "Black/African American", 
-                                  "Black/African American and Hispanic",
-                                  "Chinese", 
-                                  "Filipino", 
-                                  "Filipino and Hispanic", 
-                                  "Japanese", 
-                                  "Korean", 
-                                  "Korean and Hispanic", 
-                                  "Samoan", 
-                                  "Vietnamese",
-                                  "Other Asian", 
-                                  "Other Asian and Hispanic", 
-                                  "Native American", 
-                                  "Native American and Hispanic", 
-                                  "Other pacific islander", 
-                                  "Other Race", 
-                                  "Other Race and Hispanic", 
-                                  "Refused answer and Hispanic",
-                                  "Don't know and Hispanic"
-                                 ))
-
-summary(data_all$RaceEth)
-levels(as.factor(data_all$SES))
-levels(as.factor(data_all$gender))
-data_all$gender<-factor(data_all$gender, levels = c("M","F"))
-summary(data_all$gender)
-
-levels(as.factor(data_all$PCScore))
-data_all$PCScore<-factor(data_all$PCScore, levels = c ("early", "mid", "late", "post"))
-summary(data_all$PCScore)
-
-levels(as.factor(data_all$ovob))
-data_all$ovob<-factor(data_all$ovob, levels = c("average", "low", "overweight", "obese"))
-
-levels(as.factor(data_all$central_ob))
+load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp3_1.RData")
 ```
 
 # Checking normality
@@ -155,11 +100,177 @@ lm.beta(mod0.2M)
 plot(mod0.2M)
 ```
 
+
+
 ### Aim 1. Anticipation vs. Receipt in the brain during the MID by puberty by obesity
 ### Hyp 1. Children with central obesity will show higher anticipation in striatal regions compared to the actual receipt compared to children without central obesity. This will be exaggerated in mid pubertal children
 
+##### MonetaryIncentiveDelay(MID)
+▪ predictors for anticipation of large, small, and no rewards and feedback for large, small, and no rewards for wins and losses
+▪ linear contrasts computed for anticipation of large and small reward vs. no reward, anticipation of large and small loss vs. no reward, feedback of win vs. no reward, and feedback of loss vs. no reward
+
+##### anticipation of reward versus neutral contrast mdacrwvsnt
+anticipation of large reward versus neutral contrast
+anticipation of large reward versus small reward contrast
+anticipation of large loss versus neutral contrast
+anticipation of small reward versus neutral contrast
+anticipation of small loss versus neutral contrast
+anticipation of large versus small loss contrast 
+anticipation of loss versus neutral contrast
+
+##### reward positive versus negative feedback contrast midrwpvnfkb
+loss positive versus negative feedback contrast
+
+
+### Anticipation vs. Receipt 
+
+#### Caudate model
+```{r}
+mod1.cL<-lm(change_caudate_L ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, data=subset(d, d$central_ob != "central overweight"))
+summary(mod1.cL)
+
+lm.beta(mod1.cL)
+plot(mod1.cL)
+
+# PCSum:BMIsds:WCsds significant
+```
+```{r}
+mod1.Rc<-lm(change_caudate_R ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, d)
+summary(mod1.Rc)
+
+mod1.2Rc<-lm(change_caudate_R ~ RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, d)
+summary(mod1.2Rc)
+
+AIC(mod1.Rc)
+AIC(mod1.2Rc)
+
+lm.beta(mod1.Rc)
+# plot(mod1.Rc)
+# PCSum:BMIsds:WCsds significant 
+```
+```{r}
+mytable <- xtabs(~PCScore+central_ob, data=df)
+ftable(mytable) # print table
+summary(mytable) # chi-square test of indepedence
+```
+
+
+
+```{r}
+p1<- ggplot(d, aes(x=PCScore, y=change_caudate_R, color = central_ob)) + geom_violin() + theme_bw()
+p2<- ggplot(subset(d, d$BMIsds > -5), aes(x=BMIsds, y=change_caudate_L)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+p2
+
+p3<- ggplot(d, aes(x=PCSum, y=change_caudate_L, color=central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+p3
+
+p3.1<- ggplot(subset(d, d$central_ob == "average"), aes(x=PCSum, y=change_caudate_L, color=central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+p3.1
+
+p4<- ggplot(d, aes(x=PCSum, y=change_caudate_R, color=central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+p4
+
+p4.1<- ggplot(subset(d, d$central_ob == "average"), aes(x=PCSum, y=change_caudate_R, color=central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+p4.1
+
+p5<- ggplot(d, aes(x=fmri_beta_gparc_mean_motion, y=change_caudate_R, color=central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+p5
+
+p5.1<- ggplot(d, aes(x=ovob, y=fmri_beta_gparc_mean_motion, color=ovob)) +
+    geom_violin()+ theme_classic()    # Don't add shaded confidence region
+p5.1
+```
+
+change_caudate_R?L > 0 ==> reward beta was larger than anticipation
+change_caudate_R?L < 0 ==> reward beta was smaller than anticipation
+change_caudate_R?L == 0 ==> no difference between anticipation and reward
+
+#### Summary
+Compared to the children with an average BMI, children with central obesity show higher response to the anticipation of a reward compared to the receipt of the reward with increasing development. This is additionally in contrast to those children with obesity without high waist circumference, who are not different from the average group with increasing development. 
+
+
+```{r}
+
+mod1.pL<-lm(change_putamen_L ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, data=d)
+summary(mod1.pL)
+
+lm.beta(mod1.pL)
+plot(mod1.pL)
+
+# PCSum:BMIsds:WCsds
+```
+
+
+```{r}
+ggplot(data, aes(x=PCSum*BMIsds*WCsds, y=change_putamen_L, color = gender)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+
+
+ggplot(data, aes(x=PCScore, y=change_putamen_R, color = central_ob)) + geom_violin() + theme_bw()
+ggplot(data, aes(x=PCScore, y=change_putamen_L, color = central_ob)) + geom_violin() + theme_bw()
+
+```
+
+```{r}
+mod1.pR<-lm(change_putamen_R ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, data=d)
+summary(mod1.pR)
+
+lm.beta(mod1.pR)
+plot(mod1.pR)
+```
+#### Summary
+The effect of puberty, BMI, and waist circumference appears to be solely in the caudate (particularly in the right) not the putamen. 
+
+##### Interpretation of 3-way interaction
+A three way interaction means that the interaction among the two factors (A x B) is different across the levels of the third factor (C). If the interaction of A x B differs a lot among the levels of C then it sounds reasonable that the two way interaction A x B should not appear as significant. This could be the case of your data.
+
+To put it another way: A two way interaction A x B exists in reality (not statistically) along with a three order interaction A x B x C only if the way that the factors A and B interacts among the levels of the factor C is similar.
+
+So, use a table or an appropriate error chart in order to visualize the way that the interaction of A, B differs between the levels of C and try to interpret those findings.
+
+If you want to emphasize the differences that you will notice then you may apply standard statistical methods (t - test, Kruskal Wallis etc) and confirm the differences with a statistical test. Keep in mind that in that case it is a good idea to make a Bonferroni correction for the rejection level.
+
+
+
+### Aim 2. Effect of testosterone on reward vs. no reward between sex by obesity
+### Hyp 2. Girls with high testosterone will show lower striatal response to reward compared to no reward. Boys on the other hand will show increased response to reward compared to no reward in the stiatum. In the ** posterior cingulate cortex ** high testosterone will be related to decreased BOLD response in the reward vs. no reward trials, this will mean that girls will have a diminished BOLD response in the posterior cingulate. In the ventromedial prefrontal cortex, BOLD response in the reward vs. no reward contrast will be inversely related to testosterone concentrations, this will relate to a lower BOLD response in the ventromedial prefrontal cortex in girls. 
+
+##### MonetaryIncentiveDelay(MID)
+▪ predictors for anticipation of large, small, and no rewards and feedback for large, small, and no rewards for wins and losses
+▪ linear contrasts computed for anticipation of large and small reward vs. no reward, anticipation of large and small loss vs. no reward, feedback of win vs. no reward, and feedback of loss vs. no reward
+
+##### anticipation of reward versus neutral contrast mdacrwvsnt
+anticipation of large reward versus neutral contrast
+anticipation of large reward versus small reward contrast
+anticipation of large loss versus neutral contrast
+anticipation of small reward versus neutral contrast
+anticipation of small loss versus neutral contrast
+anticipation of large versus small loss contrast 
+anticipation of loss versus neutral contrast
+
+##### reward positive versus negative feedback contrast midrwpvnfkb
+loss positive versus negative feedback contrast midlossposvsnegfkbctxlhgp142
+reward positive versus negative feedback contrast
+
+
+
+
 ```{r}
 save(data_all, file = "~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp4.RData")
+save(data, file = "~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp4_1.RData")
 ```
 
 
