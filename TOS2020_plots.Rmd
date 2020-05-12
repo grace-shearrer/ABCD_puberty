@@ -5,70 +5,58 @@ output: html_notebook
 
 ```{r}
 library(ggplot2)
-```
-
-
-
-
-```{r}
-ggplot(d, aes(x=PCSum*BMIsds*WCsds, y=change_putamen_L, color = gender)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-
-
-ggplot(d, aes(x=PCScore, y=change_putamen_R, color = central_ob)) + geom_violin() + theme_bw()
-ggplot(d, aes(x=PCScore, y=change_putamen_L, color = central_ob)) + geom_violin() + theme_bw()
+library(ggpubr)
 ```
 
 
 ```{r}
-p1<- ggplot(d, aes(x=PCScore, y=change_caudate_R, color = central_ob)) + geom_violin() + theme_bw()
-p2<- ggplot(subset(d, d$BMIsds > -5), aes(x=BMIsds, y=change_caudate_L)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-p2
-
-p3<- ggplot(d, aes(x=PCSum, y=change_caudate_L, color=central_ob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-p3
-
-p3.1<- ggplot(subset(d, d$central_ob == "average"), aes(x=PCSum, y=change_caudate_L, color=central_ob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-p3.1
-
-p4<- ggplot(d, aes(x=PCSum, y=change_caudate_R, color=central_ob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-p4
-
-p4.1<- ggplot(subset(d, d$central_ob == "average"), aes(x=PCSum, y=change_caudate_R, color=central_ob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-p4.1
-
-p5<- ggplot(d, aes(x=fmri_beta_gparc_mean_motion, y=change_caudate_R, color=central_ob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-p5
-
-p5.1<- ggplot(d, aes(x=ovob, y=fmri_beta_gparc_mean_motion, color=ovob)) +
-    geom_violin()+ theme_classic()    # Don't add shaded confidence region
-p5.1
+load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp3_1.RData")
 ```
 
+# Anticipation compared to reward in the caudate
 ```{r}
-
-ggplot(data_all, aes(x=PCSum, y=hormone_scr_ert_mean, color = gender)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()   # Don't add shaded confidence region
-
-ggplot(subset(data_all, data_all$gender == "F"), aes(x=PCSum, y=hormone_scr_ert_mean, color = ovob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm)+ theme_classic()    # Don't add shaded confidence region
-
-ggplot(subset(data_all, data_all$gender == "M"), aes(x=PCSum, y=hormone_scr_ert_mean, color = ovob)) +
+caudate_L <-ggplot(subcort_RwLsAn, aes(x=PCSum, y=CaudateAntVsRewL, color = central_ob)) +
     geom_point(shape=1) +    # Use hollow circles
     geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+
+caudate_Lv <-ggplot(subcort_RwLsAn, aes(x=PCScore, y=CaudateAntVsRewL, color = central_ob)) +
+    geom_violin() + theme_classic()    # Don't add shaded confidence region
+
+
+caudate_R <-ggplot(subcort_RwLsAn, aes(x=PCSum, y=CaudateAntVsRewR, color = central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+
+caudate_Rv <-ggplot(subcort_RwLsAn, aes(x=PCScore, y=CaudateAntVsRewR, color = central_ob)) +
+    geom_violin() + theme_classic()    # Don't add shaded confidence region
+
+ggarrange(caudate_L, caudate_R,   ncol = 1, nrow = 2)
 ```
+
+# Reward compared to Loss in the caudate
+```{r}
+caudate_L2 <-ggplot(subcort_, aes(x=PCSum, y=CaudateRewVsLossL, color = central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+
+caudate_L2v <-ggplot(subcort_, aes(x=PCScore, y=CaudateRewVsLossL, color = central_ob)) +
+    geom_violin() + theme_classic()    # Don't add shaded confidence region
+
+
+caudate_R2 <-ggplot(subcort_, aes(x=PCSum, y=CaudateRewVsLossR, color = central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+
+
+mytable <- xtabs(~PCScore+central_ob, data=subcort_RwLsAn)
+ftable(mytable) # print table
+
+describeBy(subcort_$CaudateRewVsLossR, subcort_$central_ob)
+
+caudate_R2v <-ggplot(subcort_, aes(x=central_ob, y=CaudateRewVsLossR, color = central_ob)) +
+    geom_violin() + theme_classic()    # Don't add shaded confidence region
+caudate_R2v
+
+ggarrange(caudate_L2, caudate_R2,   ncol = 1, nrow = 2)
+```
+

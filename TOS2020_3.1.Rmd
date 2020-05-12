@@ -71,14 +71,15 @@ scanner_type<-df_subcort %>%
   select(subjectkey, scanner_type_pd)
   
 subcort<-df_subcort %>%
-  select(subjectkey, contains("caudate"),contains("putamen"),contains("pallidum"), contains("thlpp"),contains("amygdala"), contains("accarea"), contains("ventraldc"), contains("hthp"), scanner_type_pd)
+  select(subjectkey, contains("caudate"),contains("putamen"),contains("pallidum"), contains("thlpp"),contains("amygdala"), contains("accarea"), contains("ventraldc"), contains("hthp"))
 # head(subcort)
 
 # data_all$WCsds
 
-base<-data_all %>%
+base1<-data_all %>%
   select(subjectkey, subjectkey, interview_age, gender, anthroheightcalc, anthroweightcalc, anthro_waist_cm, PCSum, RaceEth, SES, age_years, PCScore, gender, hormone_scr_hse_mean, hormone_scr_dhea_mean, hormone_scr_ert_mean, BMIsds, BMIper, central_ob, ovob, WCsds, fmri_beta_gparc_mean_motion)
 
+base<-merge(base1, scanner_type)
 df<- merge(base, subcort)
 ```
 

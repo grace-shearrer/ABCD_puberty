@@ -24,6 +24,9 @@ library(emmeans)
 
 ```{r}
 load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp3_1.RData")
+
+subcort_<-subset(subcort_RwLsAn, subcort_RwLsAn$central_ob != "central average" & subcort_RwLsAn$central_ob != "central overweight")
+summary(as.factor(subcort_$central_ob))
 ```
 
 # Checking normality
@@ -65,27 +68,15 @@ summary(mod0.0)
 plot(mod0.0)
 ```
 
-
-
-```{r}
-summary(data_all$BMIsds)
-mod0.2F<-lm(sqrt_T ~PCSum+RaceEth+age_years, data=subset(data_all, data_all$gender == "F"))
-summary(mod0.2F)
-lm.beta(mod0.2F)
-plot(mod0.2F)
-```
-
-
-
-
 ```{r}
 summary(data_all$ovob)
-mod0.2M<-lm(sqrt_T ~PCSum+RaceEth+SES+age_years, data=subset(data_all, data_all$gender == "M"))
-summary(mod0.2M)
-lm.beta(mod0.2M)
-plot(mod0.2M)
-```
+mod0.1<-lm(sqrt_T ~PCSum*gender*BMIsds+RaceEth+SES+age_years, data=data_all)
+summary(mod0.1)
 
+lm.beta(mod0.1)
+plot(mod0.1)
+```
+# Summary aim 0. No effect of sex, puberty, or obesity on testosterone levels. Only age was related.
 
 
 ### Aim 1. Anticipation vs. Receipt in the brain during the MID by puberty by obesity
@@ -112,7 +103,8 @@ loss positive versus negative feedback contrast
 
 #### Caudate model
 ```{r}
-mod1.cL<-lm(change_caudate_L ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, data=subset(d, d$central_ob != "central overweight"))
+# subcort_RwLsAn$CaudateAntVsRewL
+mod1.cL<-lm(CaudateAntVsRewL ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, data=subcort_)
 summary(mod1.cL)
 
 lm.beta(mod1.cL)
@@ -121,10 +113,10 @@ plot(mod1.cL)
 # PCSum:BMIsds:WCsds significant
 ```
 ```{r}
-mod1.Rc<-lm(change_caudate_R ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, d)
+mod1.Rc<-lm(CaudateAntVsRewR ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, subcort_)
 summary(mod1.Rc)
 
-mod1.2Rc<-lm(change_caudate_R ~ RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, d)
+mod1.2Rc<-lm(CaudateAntVsRewR ~ RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, subcort_)
 summary(mod1.2Rc)
 
 AIC(mod1.Rc)
@@ -135,7 +127,7 @@ lm.beta(mod1.Rc)
 # PCSum:BMIsds:WCsds significant 
 ```
 ```{r}
-mytable <- xtabs(~PCScore+central_ob, data=df)
+mytable <- xtabs(~PCScore+central_ob, data=subcort_)
 ftable(mytable) # print table
 summary(mytable) # chi-square test of indepedence
 ```
@@ -146,31 +138,25 @@ change_caudate_R?L > 0 ==> reward beta was larger than anticipation
 change_caudate_R?L < 0 ==> reward beta was smaller than anticipation
 change_caudate_R?L == 0 ==> no difference between anticipation and reward
 
-#### Summary
-Compared to the children with an average BMI, children with central obesity show higher response to the anticipation of a reward compared to the receipt of the reward with increasing development. This is additionally in contrast to those children with obesity without high waist circumference, who are not different from the average group with increasing development. 
-
 
 ```{r}
-
-mod1.pL<-lm(change_putamen_L ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, data=d)
+mod1.pL<-lm(PutamenAntVsRewL ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, data=subcort_)
 summary(mod1.pL)
 
 lm.beta(mod1.pL)
 plot(mod1.pL)
-
-# PCSum:BMIsds:WCsds
 ```
 
 
 ```{r}
-mod1.pR<-lm(change_putamen_R ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, data=d)
+mod1.pR<-lm(PutamenAntVsRewR ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, data=subcort_)
 summary(mod1.pR)
 
 lm.beta(mod1.pR)
 plot(mod1.pR)
 ```
-#### Summary
-The effect of puberty, BMI, and waist circumference appears to be solely in the caudate (particularly in the right) not the putamen. 
+# Summary
+Compared to the children with an average BMI, children with central obesity show higher response to the anticipation of a reward compared to the receipt of the reward with increasing development in the caudate. This is additionally in contrast to those children with obesity without high waist circumference, who are not different from the average group with increasing development. The effect was not seen in the putamen.
 
 ##### Interpretation of 3-way interaction
 A three way interaction means that the interaction among the two factors (A x B) is different across the levels of the third factor (C). If the interaction of A x B differs a lot among the levels of C then it sounds reasonable that the two way interaction A x B should not appear as significant. This could be the case of your data.
@@ -203,12 +189,52 @@ anticipation of loss versus neutral contrast
 loss positive versus negative feedback contrast midlossposvsnegfkbctxlhgp142
 reward positive versus negative feedback contrast
 
+```{r}
+mod2.cR<-lm(CaudateRewVsLossR ~ hormone_scr_ert_mean*BMIsds*gender+RaceEth+SES+age_years+fmri_beta_gparc_mean_motion+scanner_type_pd, data=subcort_)
 
-
+summary(mod2.cR)
+```
 
 ```{r}
-# save(data_all, file = "~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp4.RData")
-# save(data, file = "~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp4_1.RData")
+mod2.cL<-lm(CaudateRewVsLossL ~ hormone_scr_ert_mean*BMIsds*gender+RaceEth+SES+age_years+fmri_beta_gparc_mean_motion+scanner_type_pd, data=subcort_)
+
+summary(mod2.cL)
 ```
+```{r}
+mod2.pR<-lm(PutamenRewVsLossR ~ hormone_scr_ert_mean*BMIsds*gender+RaceEth+SES+age_years+fmri_beta_gparc_mean_motion+scanner_type_pd, data=subcort_)
+
+summary(mod2.pR)
+```
+
+```{r}
+mod2.pL<-lm(PutamenRewVsLossL ~ hormone_scr_ert_mean*BMIsds*gender+RaceEth+SES+age_years+fmri_beta_gparc_mean_motion+scanner_type_pd, data=subcort_)
+
+summary(mod2.pL)
+```
+ In the ** posterior cingulate cortex ** high testosterone will be related to decreased BOLD response in the reward vs. no reward trials, this will mean that girls will have a diminished BOLD response in the posterior cingulate.
+```{r}
+mod2.pcR<-lm(RewVLoss_PC_R ~ hormone_scr_ert_mean*BMIsds*gender+RaceEth+SES+age_years+fmri_beta_gparc_mean_motion+scanner_type_pd, data=RewVsLoss)
+
+summary(mod2.pcR)
+```
+
+```{r}
+mod2.pcL<-lm(RewVLoss_PC_L ~ hormone_scr_ert_mean*BMIsds*gender+RaceEth+SES+age_years+fmri_beta_gparc_mean_motion+scanner_type_pd, data=RewVsLoss)
+
+summary(mod2.pcL)
+``` 
+```{r}
+mod2.vmR<-lm(RewVLoss_VMPF_R ~ hormone_scr_ert_mean*BMIsds*gender+RaceEth+SES+age_years+fmri_beta_gparc_mean_motion+scanner_type_pd, data=RewVsLoss)
+
+summary(mod2.vmR)
+``` 
+
+```{r}
+mod2.vmL<-lm(RewVLoss_VMPF_L ~ hormone_scr_ert_mean*BMIsds*gender+RaceEth+SES+age_years+fmri_beta_gparc_mean_motion+scanner_type_pd, data=RewVsLoss)
+
+summary(mod2.vmL)
+``` 
+# Summary of aim 2. Threeway interaction between testosterone, sex, and BMI in the caudate only. No effect in the ventromedial prefrontal cortex, the putamen, nor the posterior cingulate. 
+
 
 
