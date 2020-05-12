@@ -1,0 +1,74 @@
+---
+title: "TOS 2020 analysis: plots"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+```
+
+
+
+
+```{r}
+ggplot(d, aes(x=PCSum*BMIsds*WCsds, y=change_putamen_L, color = gender)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+
+
+ggplot(d, aes(x=PCScore, y=change_putamen_R, color = central_ob)) + geom_violin() + theme_bw()
+ggplot(d, aes(x=PCScore, y=change_putamen_L, color = central_ob)) + geom_violin() + theme_bw()
+```
+
+
+```{r}
+p1<- ggplot(d, aes(x=PCScore, y=change_caudate_R, color = central_ob)) + geom_violin() + theme_bw()
+p2<- ggplot(subset(d, d$BMIsds > -5), aes(x=BMIsds, y=change_caudate_L)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+p2
+
+p3<- ggplot(d, aes(x=PCSum, y=change_caudate_L, color=central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+p3
+
+p3.1<- ggplot(subset(d, d$central_ob == "average"), aes(x=PCSum, y=change_caudate_L, color=central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+p3.1
+
+p4<- ggplot(d, aes(x=PCSum, y=change_caudate_R, color=central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+p4
+
+p4.1<- ggplot(subset(d, d$central_ob == "average"), aes(x=PCSum, y=change_caudate_R, color=central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+p4.1
+
+p5<- ggplot(d, aes(x=fmri_beta_gparc_mean_motion, y=change_caudate_R, color=central_ob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+p5
+
+p5.1<- ggplot(d, aes(x=ovob, y=fmri_beta_gparc_mean_motion, color=ovob)) +
+    geom_violin()+ theme_classic()    # Don't add shaded confidence region
+p5.1
+```
+
+```{r}
+
+ggplot(data_all, aes(x=PCSum, y=hormone_scr_ert_mean, color = gender)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()   # Don't add shaded confidence region
+
+ggplot(subset(data_all, data_all$gender == "F"), aes(x=PCSum, y=hormone_scr_ert_mean, color = ovob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm)+ theme_classic()    # Don't add shaded confidence region
+
+ggplot(subset(data_all, data_all$gender == "M"), aes(x=PCSum, y=hormone_scr_ert_mean, color = ovob)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
+```

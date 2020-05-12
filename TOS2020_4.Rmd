@@ -75,20 +75,6 @@ lm.beta(mod0.2F)
 plot(mod0.2F)
 ```
 
-```{r}
-
-ggplot(data_all, aes(x=PCSum, y=hormone_scr_ert_mean, color = gender)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()   # Don't add shaded confidence region
-
-ggplot(subset(data_all, data_all$gender == "F"), aes(x=PCSum, y=hormone_scr_ert_mean, color = ovob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm)+ theme_classic()    # Don't add shaded confidence region
-
-ggplot(subset(data_all, data_all$gender == "M"), aes(x=PCSum, y=hormone_scr_ert_mean, color = ovob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-```
 
 
 
@@ -156,43 +142,6 @@ summary(mytable) # chi-square test of indepedence
 
 
 
-```{r}
-p1<- ggplot(d, aes(x=PCScore, y=change_caudate_R, color = central_ob)) + geom_violin() + theme_bw()
-p2<- ggplot(subset(d, d$BMIsds > -5), aes(x=BMIsds, y=change_caudate_L)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-p2
-
-p3<- ggplot(d, aes(x=PCSum, y=change_caudate_L, color=central_ob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-p3
-
-p3.1<- ggplot(subset(d, d$central_ob == "average"), aes(x=PCSum, y=change_caudate_L, color=central_ob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-p3.1
-
-p4<- ggplot(d, aes(x=PCSum, y=change_caudate_R, color=central_ob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-p4
-
-p4.1<- ggplot(subset(d, d$central_ob == "average"), aes(x=PCSum, y=change_caudate_R, color=central_ob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-p4.1
-
-p5<- ggplot(d, aes(x=fmri_beta_gparc_mean_motion, y=change_caudate_R, color=central_ob)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-p5
-
-p5.1<- ggplot(d, aes(x=ovob, y=fmri_beta_gparc_mean_motion, color=ovob)) +
-    geom_violin()+ theme_classic()    # Don't add shaded confidence region
-p5.1
-```
-
 change_caudate_R?L > 0 ==> reward beta was larger than anticipation
 change_caudate_R?L < 0 ==> reward beta was smaller than anticipation
 change_caudate_R?L == 0 ==> no difference between anticipation and reward
@@ -212,17 +161,6 @@ plot(mod1.pL)
 # PCSum:BMIsds:WCsds
 ```
 
-
-```{r}
-ggplot(data, aes(x=PCSum*BMIsds*WCsds, y=change_putamen_L, color = gender)) +
-    geom_point(shape=1) +    # Use hollow circles
-    geom_smooth(method=lm) + theme_classic()    # Don't add shaded confidence region
-
-
-ggplot(data, aes(x=PCScore, y=change_putamen_R, color = central_ob)) + geom_violin() + theme_bw()
-ggplot(data, aes(x=PCScore, y=change_putamen_L, color = central_ob)) + geom_violin() + theme_bw()
-
-```
 
 ```{r}
 mod1.pR<-lm(change_putamen_R ~ PCSum*BMIsds*WCsds+RaceEth+SES+age_years+gender+fmri_beta_gparc_mean_motion+scanner_type_pd, data=d)
@@ -269,8 +207,8 @@ reward positive versus negative feedback contrast
 
 
 ```{r}
-save(data_all, file = "~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp4.RData")
-save(data, file = "~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp4_1.RData")
+# save(data_all, file = "~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp4.RData")
+# save(data, file = "~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp4_1.RData")
 ```
 
 

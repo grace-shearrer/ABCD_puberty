@@ -21,6 +21,7 @@ load("~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp2_1.RData")
 ```{r}
 #data_all<-data_all[data_all$PCScore != "mid_x", ] # removing mid_x, as they don't appear to fit into the predefined groups
 #data_all<-data_all[!is.na(data_all$subjectkey), ]
+# d<-df[!is.na(df$PCScore), ]
 
 data_all$gender<-as.factor(data_all$gender)
 levels(as.factor(data_all$RaceEth))
@@ -82,36 +83,177 @@ df<- merge(base, subcort)
 ```
 
 #### Caudate
+Aim 2
+##### Anticipation
 ```{r}
 AntciCaudate<- df %>%
   select(subjectkey, contains("mdacrwvsnt")) %>%
   select(subjectkey, contains("caudate"))
 
+AnticCaudateL_summary<-AntciCaudate %>%
+  select(subjectkey, mdacrwvsntblcaudate)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+
+AnticCaudateR_summary<-AntciCaudate %>%
+  select(subjectkey, mdacrwvsntbrightcaudate)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+
+AntCaudate<-merge(AnticCaudateL_summary, AnticCaudateR_summary)
+head(AntCaudate)
+colnames(AntCaudate)<-c("subjectkey","ant_caudate_L","ant_caudate_R")
+```
+##### Reward
+```{r}
 RewCaudate<- df %>%
   select(subjectkey, contains("midrwpvnfkb")) %>%
   select(subjectkey, contains("caudate"))
+head(RewCaudate)
 
-df$change_caudate_L<- RewCaudate$midrwpvnfkblcaudate - AntciCaudate$mdacrwvsntblcaudate
-df$change_caudate_R<- RewCaudate$midrwpvnfkbrightcaudate - AntciCaudate$mdacrwvsntbrightcaudate
+RewCaudateR_summary<-RewCaudate %>%
+  select(subjectkey, midrwpvnfkbrightcaudate)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
 
-d<-df[!is.na(df$PCScore), ]
+RewCaudateL_summary<-RewCaudate %>%
+  select(subjectkey, midrwpvnfkblcaudate)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+
+RewCaudate<-merge(RewCaudateL_summary, RewCaudateR_summary)
+head(RewCaudate)
+colnames(RewCaudate)<-c("subjectkey","Rew_caudate_L","Rew_caudate_R")
 ```
 
-### Putamen
+##### Loss
 ```{r}
-AntciPutamen<- d %>%
+LossCaudate<- df %>%
+  select(subjectkey, contains("midlspvnfkb")) %>%
+  select(subjectkey, contains("caudate"))
+head(LossCaudate)
+
+LossCaudateR_summary<-LossCaudate %>%
+  select(subjectkey, midlspvnfkbrightcaudate)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+
+LossCaudateL_summary<-LossCaudate %>%
+  select(subjectkey, midlspvnfkblcaudate)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+
+LossCaudate<-merge(LossCaudateL_summary, LossCaudateR_summary)
+dim(LossCaudate)
+colnames(LossCaudate)<-c("subjectkey","Loss_caudate_L","Loss_caudate_R")
+```
+##### Merge
+```{r}
+Caudate1<-merge(AntCaudate, RewCaudate)
+Caudate<-merge(Caudate1, LossCaudate)
+```
+
+
+#### Putamen
+Aim 2
+##### Anticipation
+```{r}
+AntciPutamen<- df %>%
   select(subjectkey, contains("mdacrwvsnt")) %>%
   select(subjectkey, contains("putamen"))
 
-RewPutamen<- d %>%
+AnticPutamenL_summary<-AntciPutamen %>%
+  select(subjectkey, mdacrwvsntblputamen)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+
+AnticPutamenR_summary<-AntciPutamen %>%
+  select(subjectkey, mdacrwvsntbrightputamen)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+
+AntPutamen<-merge(AnticPutamenL_summary, AnticPutamenR_summary)
+head(AntPutamen)
+colnames(AntPutamen)<-c("subjectkey","ant_putamen_L","ant_putamen_R")
+```
+##### Reward
+```{r}
+RewPutamen<- df %>%
   select(subjectkey, contains("midrwpvnfkb")) %>%
   select(subjectkey, contains("putamen"))
+head(RewPutamen)
 
-d$change_putamen_L<- RewPutamen$midrwpvnfkblputamen - AntciPutamen$mdacrwvsntblputamen
-d$change_putamen_R<- RewPutamen$midrwpvnfkbrightputamen - AntciPutamen$mdacrwvsntbrightputamen
+RewPutamenR_summary<-RewPutamen %>%
+  select(subjectkey, midrwpvnfkbrightputamen)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+
+RewPutamenL_summary<-RewPutamen %>%
+  select(subjectkey, midrwpvnfkblputamen)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+
+RewPutamen<-merge(RewPutamenL_summary, RewPutamenR_summary)
+head(RewPutamen)
+colnames(RewPutamen)<-c("subjectkey","Rew_putamen_L","Rew_putamen_R")
+```
+
+##### Loss
+```{r}
+LossPutamen<- df %>%
+  select(subjectkey, contains("midlspvnfkb")) %>%
+  select(subjectkey, contains("putamen"))
+head(LossPutamen)
+
+LossPutamenR_summary<-LossPutamen %>%
+  select(subjectkey, midlspvnfkbrightputamen)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+
+LossPutamenL_summary<-LossPutamen %>%
+  select(subjectkey, midlspvnfkblputamen)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+
+LossPutamen<-merge(LossPutamenL_summary, LossPutamenR_summary)
+head(LossPutamen)
+colnames(LossPutamen)<-c("subjectkey","Loss_putamen_L","Loss_putamen_R")
+```
+##### Merge
+```{r}
+Putamen1<-merge(AntPutamen, RewPutamen)
+Putamen<-merge(Putamen1, LossPutamen)
+head(Putamen)
+```
+
+```{r}
+Putamen$PutamenAntVsRewL<- Putamen$ant_putamen_L - Putamen$Rew_putamen_L
+Putamen$PutamenAntVsRewR<-  Putamen$ant_putamen_R - Putamen$Rew_putamen_R
+
+Putamen$PutamenRewVsLossL<- Putamen$Rew_putamen_L - Putamen$Loss_putamen_L
+Putamen$PutamenRewVsLossR<-  Putamen$Rew_putamen_R - Putamen$Loss_putamen_R
+
+head(Putamen)
+
+Caudate$CaudateAntVsRewL<- Caudate$ant_caudate_L - Caudate$Rew_caudate_L
+Caudate$CaudateAntVsRewR<-  Caudate$ant_caudate_R - Caudate$Rew_caudate_R
+
+Caudate$CaudateRewVsLossL<- Caudate$Rew_caudate_L - Caudate$Loss_caudate_L
+Caudate$CaudateRewVsLossR<-  Caudate$Rew_caudate_R - Caudate$Loss_caudate_R
+  
+head(Caudate)
+
+inter<-merge(Putamen, Caudate)
+head(inter)
+subcort_RwLsAn<-merge(inter, base)
+dim(subcort_RwLsAn)
+
 ```
 
 ### Posterior cingulate
+* midrwpvnfkbctxlhbankssts ==> reward 
+* midlspvnfkbrightventraldc ==> loss
+
 ```{r}
 # PC posterior cingulate 
 RewPCLh<- data_all %>%
@@ -149,20 +291,157 @@ LossPCRh$Loss_meanPCrh <- rowMeans(LossPCRh[,2:8], na.rm=TRUE)
 ```
 
 ```{r}
-PC_L<-merge(LossPCLh, RewPCLh)
+head(LossPCLh)
+LossPCLh_summary<-LossPCLh %>%
+  select(subjectkey, Loss_meanPClh)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+dim(LossPCLh_summary)
+```
+```{r}
+head(LossPCRh)
+LossPCRh_summary<-LossPCRh %>%
+  select(subjectkey, Loss_meanPCrh)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+head(LossPCRh_summary)
+```
+
+```{r}
+colnames(RewPCLh)
+RewPCLh_summary<-RewPCLh %>%
+  select(subjectkey, Reward_meanPClh)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+head(RewPCLh_summary)
+```
+
+```{r}
+head(RewPCRh)
+RewPCRh_summary<-RewPCRh %>%
+  select(subjectkey, Reward_meanPCrh)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+head(RewPCRh_summary)
+```
+
+```{r}
+summary(LossPCLh$subjectkey)
+PC_L<-merge(LossPCLh_summary, RewPCLh_summary)
 dim(PC_L)
-PC_R<-merge(LossPCRh, RewPCRh)
+PC_R<-merge(LossPCRh_summary, RewPCRh_summary)
 PC<-merge(PC_L, PC_R)
-dim(PC)
+head(PC)
 PC$RewVLoss_PC_L<- PC$Reward_meanPClh - PC$Loss_meanPClh
 PC$RewVLoss_PC_R<- PC$Reward_meanPCrh - PC$Loss_meanPCrh
 summary(PC$RewVLoss_PC_R)
 df2<-merge(base, PC)
-dim(df2)
+head(df2)
+```
+
+### Ventromedial prefrontal cortex
+#### Left
+```{r}
+RewVMPFLh<- data_all %>%
+  select(subjectkey, midrwposvsnegfkbetactxlhgp24,midrwposvsnegfkbetactxlhgp25, midrwposvsnegfkbetactxlhgp27, midrwposvsnegfkbetactxlhgp116, midrwposvsnegfkbetactxlhgp117, midrwposvsnegfkbetactxlhgp125) 
+
+dim(RewVMPFLh)
+
+RewVMPFLh$Rew_meanVMPFlh <- rowMeans(RewVMPFLh[,2:7], na.rm=TRUE)
+colnames(RewVMPFLh)
 ```
 
 
 ```{r}
-save(data_all, df, d, df2, file="~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp3_1.RData")
+LossVMPFLh<- data_all %>%
+  select(subjectkey, midlossposvsnegfkbctxlhgp24, midlossposvsnegfkbctxlhgp25, midlossposvsnegfkbctxlhgp27, midlossposvsnegfkbctxlhgp116, midlossposvsnegfkbctxlhgp117, midlossposvsnegfkbctxlhgp125)
+dim(LossVMPFLh)
+
+LossVMPFLh$Loss_meanVMPFlh <- rowMeans(LossVMPFLh[,2:7], na.rm=TRUE)
+colnames(LossPCLh)
+```
+#### Right
+```{r}
+RewVMPFRh<- data_all %>%
+  select(subjectkey, midrwposvsnegfkbetactxrhgp182,midrwposvsnegfkbetactxrhgp183, midrwposvsnegfkbetactxrhgp184, midrwposvsnegfkbetactxrhgp185, midrwposvsnegfkbetactxrhgp188, midrwposvsnegfkbetactxrhgp278, midrwposvsnegfkbetactxrhgp279) 
+
+dim(RewVMPFRh)
+
+RewVMPFRh$Rew_meanVMPFrh <- rowMeans(RewVMPFRh[,2:8], na.rm=TRUE)
+colnames(RewVMPFRh)
+```
+
+```{r}
+LossVMPFRh<- data_all %>%
+  select(subjectkey, midlossposvsnegfkbctxrhgp182, midlossposvsnegfkbctxrhgp183, midlossposvsnegfkbctxrhgp184, midlossposvsnegfkbctxrhgp185, midlossposvsnegfkbctxrhgp188, midlossposvsnegfkbctxrhgp279,midlossposvsnegfkbctxrhgp278)
+dim(LossVMPFRh)
+
+LossVMPFRh$Loss_meanVMPFrh <- rowMeans(LossVMPFRh[,2:8], na.rm=TRUE)
+colnames(LossPCRh)
+```
+
+```{r}
+# head(LossVMPFLh)
+LossVMPFLh_summary<-LossVMPFLh %>%
+  select(subjectkey, Loss_meanVMPFlh)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+head(LossVMPFLh_summary)
+```
+
+
+```{r}
+# head(LossVMPFRh)
+LossVMPFRh_summary<-LossVMPFRh %>%
+  select(subjectkey, Loss_meanVMPFrh)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+head(LossVMPFRh_summary)
+```
+
+```{r}
+colnames(RewVMPFLh)
+RewVMPFLh_summary<-RewVMPFLh %>%
+  select(subjectkey, Rew_meanVMPFlh)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+head(RewVMPFLh_summary)
+```
+
+```{r}
+head(RewVMPFRh)
+RewVMPFRh_summary<-RewVMPFRh %>%
+  select(subjectkey, Rew_meanVMPFrh)%>% 
+  group_by(subjectkey) %>% 
+  summarise_all(funs(mean))
+head(RewVMPFRh_summary)
+```
+
+```{r}
+summary(LossVMPFLh$subjectkey)
+VMPF_L<-merge(LossVMPFLh_summary, RewVMPFLh_summary)
+dim(VMPF_L)
+VMPF_R<-merge(LossVMPFRh_summary, RewVMPFRh_summary)
+VMPF<-merge(VMPF_L, VMPF_R)
+head(VMPF)
+
+VMPF$RewVLoss_VMPF_L<- VMPF$Rew_meanVMPFlh - VMPF$Loss_meanVMPFlh
+VMPF$RewVLoss_VMPF_R<- VMPF$Rew_meanVMPFrh - VMPF$Loss_meanVMPFrh
+summary(VMPF$RewVLoss_VMPF_R)
+
+df3<-merge(df2, VMPF)
+head(df3)
+
+RewVsLoss<-df3
+```
+
+```{r}
+head(RewVsLoss)
+head(subcort_RwLsAn)
+```
+
+
+```{r}
+save(data_all, df,subcort_RwLsAn, RewVsLoss, file="~/Google Drive/ABCD/ABCD_puberty/_data/TOS2020/TOS2020_chp3_1.RData")
 ```
 
